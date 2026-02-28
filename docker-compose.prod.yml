@@ -12,6 +12,7 @@ services:
     image: redis:7-alpine
 
   backend:
+    image: fcl-miniapp-backend:latest
     build:
       context: ./backend
     env_file:
@@ -24,6 +25,7 @@ services:
       - redis
 
   bot:
+    image: fcl-miniapp-bot:latest
     build:
       context: ./bot
     env_file:
@@ -32,6 +34,7 @@ services:
       - backend
 
   frontend:
+    image: fcl-miniapp-frontend:latest
     build:
       context: ./frontend
     depends_on:

@@ -4,6 +4,14 @@
 .env
 .env.*
 !.env.example
+deploy/nginx/certs/*
+!deploy/nginx/certs/.gitkeep
+*.crt
+*.key
+*.csr
+*.pem
+*.p12
+*.pfx
 
 # python
 __pycache__/
