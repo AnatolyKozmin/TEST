@@ -65,6 +65,38 @@ a {
   gap: 16px;
 }
 
+.landing-page {
+  position: relative;
+  overflow: hidden;
+  background: #0f0121;
+}
+
+.landing-page > *:not(.landing-bg-image) {
+  position: relative;
+  z-index: 1;
+}
+
+.register-page {
+  position: relative;
+  overflow: hidden;
+  background: #0f0121;
+}
+
+.register-page > *:not(.landing-bg-image) {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center bottom;
+  opacity: 1;
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -237,6 +269,20 @@ a {
   transform: translateY(1px);
 }
 
+.landing-register-button {
+  width: min(318px, 92%);
+  min-height: 84px;
+  border-radius: 0;
+  background: #ffffff;
+  color: #0f0121;
+  font-family: 'Cygre Light', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-size: 22.7px;
+  line-height: 1.16;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.26);
+}
+
 .card {
   width: min(720px, 100%);
   margin: 0 auto;
@@ -244,6 +290,13 @@ a {
   border: 1px solid var(--stroke);
   background: rgba(255, 255, 255, 0.05);
   padding: 14px;
+}
+
+.register-page .card {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
 }
 
 .field {

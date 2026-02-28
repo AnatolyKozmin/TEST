@@ -16,7 +16,7 @@ async def start(message: Message):
     kb = InlineKeyboardBuilder()
     kb.button(text="Открыть мини‑апп", web_app={"url": settings.webapp_url})
     await message.answer(
-        "Регистрация на FCL/SCL 26.\n\nНажмите кнопку, чтобы открыть мини‑апп.",
+        "Регистрация на FCL 26.\n\nНажмите кнопку, чтобы открыть мини‑апп.",
         reply_markup=kb.as_markup(),
     )
 

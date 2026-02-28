@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import AppTopbar from '../components/AppTopbar.vue'
+import bgImageUrl from '../assets/tg-app-bg.png'
 import {
   type Discipline,
   type DraftPayload,
@@ -115,7 +116,8 @@ async function submit() {
 </script>
 
 <template>
-  <div class="page">
+  <div class="page register-page">
+    <img class="landing-bg-image" :src="bgImageUrl" alt="" aria-hidden="true" />
     <AppTopbar title="Регистрация" showBack @back="router.back()" />
 
     <div class="card">

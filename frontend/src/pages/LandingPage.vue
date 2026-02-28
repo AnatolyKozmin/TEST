@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router'
 import AppTopbar from '../components/AppTopbar.vue'
 import { telegramReady } from '../lib/telegram'
-import eventLogoUrl from '../assets/logo.svg'
+import bgImageUrl from '../assets/tg-app-bg.png'
 
 const router = useRouter()
 
@@ -14,25 +14,16 @@ function goRegister() {
 </script>
 
 <template>
-  <div class="page">
+  <div class="page landing-page">
+    <img class="landing-bg-image" :src="bgImageUrl" alt="" aria-hidden="true" />
     <AppTopbar />
 
-    <div class="hero">
-      <div class="fcl-mark" aria-label="FCL Financial Cybersport League">
-        <div class="fcl-mark-word">
-          <div class="fcl-layer fcl-stroke">FCL</div>
-          <div class="fcl-layer fcl-fill">FCL</div>
-        </div>
-        <div class="fcl-caption">FINANCIAL CYBERSPORT LEAGUE</div>
-      </div>
-    </div>
+    <div class="hero" />
 
     <div class="bottom-cta">
-      <div class="event-logo">
-        <img class="event-logo-img" :src="eventLogoUrl" alt="FCL logo" />
-      </div>
-
-      <button class="primary-button" type="button" @click="goRegister">Регистрация</button>
+      <button class="primary-button landing-register-button" type="button" @click="goRegister">
+        Зарегистрироваться
+      </button>
     </div>
   </div>
 </template>
