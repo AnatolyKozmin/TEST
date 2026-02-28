@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fcl
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - ./backend/.env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/fcl
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "127.0.0.1:8011:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  bot:
+    build:
+      context: ./bot
+    env_file:
+      - ./bot/.env
+    depends_on:
+      - backend
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:5006:80"
+    depends_on:
+      - backend
+
+volumes:
+  pg_data:
+
