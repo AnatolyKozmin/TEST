@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from .bot_config import settings
+from bot_config import settings
 
 
 dp = Dispatcher()
