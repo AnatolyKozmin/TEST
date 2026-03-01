@@ -250,7 +250,7 @@ a {
 }
 
 .landing-top-logo {
-  width: min(420px, 100%);
+  width: min(520px, 100%);
   height: auto;
   display: block;
   filter: drop-shadow(0 10px 36px rgba(151, 125, 255, 0.32));
@@ -259,14 +259,15 @@ a {
 
 .landing-top-logo-caption {
   font-family: 'Cygre ExtraBold', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-  font-size: 21px;
+  font-size: clamp(14px, 3.8vw, 20px);
   line-height: 1.05;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   color: #ffffff;
   text-align: center;
   -webkit-text-stroke: 0.2px rgba(255, 255, 255, 0.85);
   text-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  white-space: nowrap;
 }
 
 .event-logo {
