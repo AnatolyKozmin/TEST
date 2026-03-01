@@ -149,6 +149,16 @@ function validateBeforeSubmit(): string | null {
   return null
 }
 
+function onPagePointerDown(e: PointerEvent) {
+  const target = e.target as HTMLElement | null
+  if (!target) return
+  if (target.closest('input, textarea, select, [contenteditable="true"]')) return
+  const active = document.activeElement as HTMLElement | null
+  if (active && active.matches('input, textarea, select, [contenteditable="true"]')) {
+    active.blur()
+  }
+}
+
 telegramReady()
 
 onMounted(async () => {
@@ -217,7 +227,7 @@ async function submit() {
 </script>
 
 <template>
-  <div class="page register-page">
+  <div class="page register-page" @pointerdown="onPagePointerDown">
     <img class="landing-bg-image" :src="bgImageUrl" alt="" aria-hidden="true" />
     <AppTopbar title="Регистрация" showBack @back="router.back()" />
 
