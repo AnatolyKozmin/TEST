@@ -18,13 +18,33 @@ declare global {
   }
 }
 
-export function getTelegramInitData(): string | null {
-  const fromTg = window.Telegram?.WebApp?.initData
-  if (fromTg && fromTg.length > 0) return fromTg
-
+function getParamFromUrlOrHash(paramName: string): string | null {
   const url = new URL(window.location.href)
-  const fromQuery = url.searchParams.get('initData')
+
+  const fromQuery = url.searchParams.get(paramName)
   if (fromQuery && fromQuery.length > 0) return fromQuery
+
+  const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : window.location.hash
+  if (hash) {
+    const hashParams = new URLSearchParams(hash)
+    const fromHash = hashParams.get(paramName)
+    if (fromHash && fromHash.length > 0) return fromHash
+  }
+
+  return null
+}
+
+export function getTelegramInitData(): string | null {
+  const fromTelegramSdk = window.Telegram?.WebApp?.initData
+  if (fromTelegramSdk && fromTelegramSdk.length > 0) return fromTelegramSdk
+
+  // Debug/manual fallback for local tests.
+  const fromInitDataParam = getParamFromUrlOrHash('initData')
+  if (fromInitDataParam && fromInitDataParam.length > 0) return fromInitDataParam
+
+  // Telegram fallback: tgWebAppData may arrive in URL hash.
+  const fromTgWebAppData = getParamFromUrlOrHash('tgWebAppData')
+  if (fromTgWebAppData && fromTgWebAppData.length > 0) return fromTgWebAppData
 
   return null
 }
