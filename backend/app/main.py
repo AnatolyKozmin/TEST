@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import insert
+from sqlalchemy import desc, func, insert, select
 
 from .config import settings
 from .db import Registration, SessionLocal, init_db
@@ -37,6 +37,13 @@ async def get_tg_user(x_telegram_init_data: str | None = Header(default=None)) -
         )
     except Exception as e:
         raise HTTPException(status_code=401, detail=str(e)) from e
+
+
+def require_admin(x_admin_token: str | None = Header(default=None)):
+    if not settings.admin_token:
+        raise HTTPException(status_code=503, detail="Admin stats disabled: ADMIN_TOKEN is not configured")
+    if not x_admin_token or x_admin_token != settings.admin_token:
+        raise HTTPException(status_code=401, detail="Invalid admin token")
 
 
 def _draft_key(tg_user_id: int) -> str:
@@ -171,4 +178,54 @@ async def submit(
 
     await redis.delete(_draft_key(user.id))
     return Response(status_code=204)
+
+
+@app.get("/api/admin/stats")
+async def admin_stats(_: None = Depends(require_admin)):
+    async with SessionLocal() as session:
+        total = (await session.execute(select(func.count()).select_from(Registration))).scalar_one()
+        unique_users = (await session.execute(select(func.count(func.distinct(Registration.tg_user_id))))).scalar_one()
+
+        by_discipline_rows = (
+            await session.execute(
+                select(Registration.discipline, func.count())
+                .group_by(Registration.discipline)
+                .order_by(desc(func.count()))
+            )
+        ).all()
+        by_mode_rows = (
+            await session.execute(
+                select(Registration.mode, func.count()).group_by(Registration.mode).order_by(desc(func.count()))
+            )
+        ).all()
+        recent_rows = (
+            await session.execute(
+                select(
+                    Registration.id,
+                    Registration.tg_user_id,
+                    Registration.tg_username,
+                    Registration.discipline,
+                    Registration.mode,
+                    Registration.submitted_at,
+                ).order_by(desc(Registration.submitted_at)).limit(30)
+            )
+        ).all()
+
+    return {
+        "total_registrations": int(total or 0),
+        "unique_users": int(unique_users or 0),
+        "by_discipline": [{"discipline": d, "count": c} for d, c in by_discipline_rows],
+        "by_mode": [{"mode": m, "count": c} for m, c in by_mode_rows],
+        "recent": [
+            {
+                "id": r.id,
+                "tg_user_id": r.tg_user_id,
+                "tg_username": r.tg_username,
+                "discipline": r.discipline,
+                "mode": r.mode,
+                "submitted_at": r.submitted_at.isoformat() if r.submitted_at else None,
+            }
+            for r in recent_rows
+        ],
+    }
 

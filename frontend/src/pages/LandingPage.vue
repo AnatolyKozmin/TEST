@@ -17,7 +17,10 @@ function goRegister() {
   <div class="page landing-page">
     <img class="landing-bg-image" :src="bgImageUrl" alt="" aria-hidden="true" />
     <div class="landing-top-logo-wrap">
-      <img class="landing-top-logo" :src="eventLogoUrl" alt="FCL 26" />
+      <div class="landing-top-logo-block">
+        <img class="landing-top-logo" :src="eventLogoUrl" alt="FCL 26" />
+        <div class="landing-top-logo-caption">Financial Cybersport League</div>
+      </div>
     </div>
     <div class="hero" />
 

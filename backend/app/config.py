@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173"
     draft_ttl_seconds: int = 60 * 60 * 24 * 7
     max_auth_age_seconds: int = 60 * 60 * 24
+    admin_token: str = ""
 
 
 settings = Settings()
