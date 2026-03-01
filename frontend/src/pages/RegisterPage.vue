@@ -51,13 +51,13 @@ const draft = reactive<DraftPayload>({
 const isTeamAllowed = computed(() => draft.discipline === 'CS2' || draft.discipline === 'DOTA2')
 const resolvedMode = computed<RegistrationMode | null>(() => {
   if (draft.discipline === 'FC26') return 'individual'
-  if (isTeamAllowed.value) return draft.mode ?? 'team'
+  if (isTeamAllowed.value) return 'team'
   return draft.mode
 })
 
 function ensureDefaults() {
   if (draft.discipline === 'FC26') draft.mode = 'individual'
-  if (isTeamAllowed.value && !draft.mode) {
+  if (isTeamAllowed.value) {
     draft.mode = 'team'
   }
   if (isTeamAllowed.value && draft.mode === 'team') {
@@ -71,6 +71,7 @@ function setDiscipline(v: Discipline) {
 }
 
 function setMode(v: RegistrationMode) {
+  if (isTeamAllowed.value && v !== 'team') return
   draft.mode = v
   if (v === 'team') ensureTeamPlayers()
 }
@@ -255,10 +256,11 @@ async function submit() {
       <div class="field" v-if="draft.discipline">
         <div class="label">Тип регистрации</div>
         <select v-model="draft.mode" @change="setMode((draft.mode ?? 'individual') as RegistrationMode)">
-          <option value="team" :disabled="!isTeamAllowed">Командная</option>
-          <option value="individual">Индивидуальная</option>
+          <option value="team" v-if="isTeamAllowed">Командная</option>
+          <option value="individual" v-else>Индивидуальная</option>
         </select>
-        <div class="hint" v-if="draft.discipline === 'FC26'">Для FC26 по умолчанию индивидуальная регистрация.</div>
+        <div class="hint" v-if="draft.discipline === 'FC26'">Для FC26 доступна только индивидуальная регистрация.</div>
+        <div class="hint" v-if="isTeamAllowed">Для {{ draft.discipline === 'CS2' ? 'CS2' : 'Dota 2' }} доступна только командная регистрация.</div>
       </div>
     </div>
 

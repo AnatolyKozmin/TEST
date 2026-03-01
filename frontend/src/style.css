@@ -88,7 +88,7 @@ a {
 }
 
 .landing-bg-image {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -96,6 +96,10 @@ a {
   object-position: center bottom;
   opacity: 1;
   pointer-events: none;
+  z-index: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
 }
 
 .topbar {

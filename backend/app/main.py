@@ -123,13 +123,13 @@ async def get_draft(user: TelegramWebAppUser = Depends(get_tg_user)):
 
 @app.put("/api/draft", status_code=204)
 async def put_draft(draft: DraftPayload, user: TelegramWebAppUser = Depends(get_tg_user)):
-    # Normalize: FC26 only individual; CS2/DOTA2 default team if omitted (frontend also enforces)
+    # Normalize: FC26 only individual; CS2/DOTA2 only team.
     discipline = draft.discipline
     mode = draft.mode
 
     if discipline == Discipline.FC26:
         mode = RegistrationMode.individual
-    if discipline in (Discipline.CS2, Discipline.DOTA2) and mode is None:
+    if discipline in (Discipline.CS2, Discipline.DOTA2):
         mode = RegistrationMode.team
 
     normalized = DraftPayload(discipline=discipline, mode=mode, data=draft.data or {})
@@ -150,11 +150,8 @@ async def submit(
     if draft.discipline == Discipline.FC26 and draft.mode != RegistrationMode.individual:
         raise HTTPException(status_code=422, detail="FC26 требует индивидуальную регистрацию")
 
-    if draft.discipline in (Discipline.CS2, Discipline.DOTA2) and draft.mode not in (
-        RegistrationMode.team,
-        RegistrationMode.individual,
-    ):
-        raise HTTPException(status_code=422, detail="Некорректный mode")
+    if draft.discipline in (Discipline.CS2, Discipline.DOTA2) and draft.mode != RegistrationMode.team:
+        raise HTTPException(status_code=422, detail="Для CS2 и Dota2 доступна только командная регистрация")
 
     payload = DraftPayload(discipline=draft.discipline, mode=draft.mode, data=draft.data or {}).model_dump()
 
