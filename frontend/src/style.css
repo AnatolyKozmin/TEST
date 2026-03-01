@@ -78,7 +78,7 @@ a {
 
 .register-page {
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   background: #0f0121;
 }
 
@@ -95,6 +95,7 @@ a {
   object-fit: cover;
   object-position: center bottom;
   opacity: 1;
+  pointer-events: none;
 }
 
 .topbar {
@@ -102,6 +103,14 @@ a {
   align-items: center;
   justify-content: space-between;
   padding-top: calc(env(safe-area-inset-top, 0px) + 4px);
+}
+
+.topbar-title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-size: 30px;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .brand {
@@ -327,6 +336,11 @@ textarea {
   font-family: 'Cygre Light', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
+select {
+  -webkit-appearance: menulist;
+  appearance: auto;
+}
+
 textarea {
   min-height: 90px;
   resize: vertical;
@@ -344,6 +358,9 @@ textarea {
   }
   .hero-title {
     font-size: 48px;
+  }
+  .topbar-title {
+    font-size: 24px;
   }
 }
 

@@ -18,7 +18,7 @@ const emit = defineEmits<{
       <span>FCL</span>
     </div>
 
-    <div v-if="title" style="font-weight: 700; letter-spacing: 0.04em">{{ title }}</div>
+    <div v-if="title" class="topbar-title">{{ title }}</div>
     <div v-else />
 
     <button class="icon-button" type="button" @click="emit('menu')" aria-label="menu">
