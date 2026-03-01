@@ -54,8 +54,12 @@ const resolvedMode = computed<RegistrationMode | null>(() => {
 
 function ensureDefaults() {
   if (draft.discipline === 'FC26') draft.mode = 'individual'
-  if (isTeamAllowed.value && !draft.mode) draft.mode = 'team'
-  if (isTeamAllowed.value && draft.mode === 'team') ensureTeamPlayers()
+  if (isTeamAllowed.value && !draft.mode) {
+    draft.mode = 'team'
+  }
+  if (isTeamAllowed.value && draft.mode === 'team') {
+    ensureTeamPlayers()
+  }
 }
 
 function setDiscipline(v: Discipline) {
@@ -76,9 +80,13 @@ const teamPlayers = computed<TeamPlayer[]>(() => {
 })
 
 function ensureTeamPlayers() {
-  const existing = Array.isArray(draft.data['team_players']) ? (draft.data['team_players'] as Partial<TeamPlayer>[]) : []
-  const normalized: TeamPlayer[] = []
+  const existingRaw = draft.data['team_players']
+  if (Array.isArray(existingRaw) && existingRaw.length === 8) {
+    return
+  }
 
+  const existing = Array.isArray(existingRaw) ? (existingRaw as Partial<TeamPlayer>[]) : []
+  const normalized: TeamPlayer[] = []
   for (let i = 0; i < 8; i++) {
     const role: TeamRole = i < 5 ? 'main' : 'reserve'
     const old = existing[i] ?? {}
@@ -93,7 +101,6 @@ function ensureTeamPlayers() {
       telegram: String(old.telegram ?? ''),
     })
   }
-
   draft.data['team_players'] = normalized
 }
 
@@ -125,7 +132,6 @@ let saveTimer: number | null = null
 watch(
   () => ({ discipline: draft.discipline, mode: draft.mode, data: draft.data }),
   () => {
-    ensureDefaults()
     if (saveTimer) window.clearTimeout(saveTimer)
     saveTimer = window.setTimeout(async () => {
       savingState.value = 'saving'
@@ -164,10 +170,7 @@ async function submit() {
     <div class="card">
       <div class="field">
         <div class="label">Дисциплина</div>
-        <select
-          :value="draft.discipline ?? ''"
-          @change="setDiscipline(($event.target as HTMLSelectElement).value as Discipline)"
-        >
+        <select v-model="draft.discipline" @change="setDiscipline(draft.discipline as Discipline)">
           <option value="" disabled>Выберите дисциплину</option>
           <option value="CS2">CS2</option>
           <option value="DOTA2">Dota 2</option>
@@ -177,7 +180,7 @@ async function submit() {
 
       <div class="field" v-if="draft.discipline">
         <div class="label">Тип регистрации</div>
-        <select :value="resolvedMode ?? ''" @change="setMode(($event.target as HTMLSelectElement).value as RegistrationMode)">
+        <select v-model="draft.mode" @change="setMode((draft.mode ?? 'individual') as RegistrationMode)">
           <option value="team" :disabled="!isTeamAllowed">Командная</option>
           <option value="individual">Индивидуальная</option>
         </select>
