@@ -117,6 +117,7 @@ function validateBeforeSubmit(): string | null {
   if (!draft.discipline || !resolvedMode.value) return 'Выберите дисциплину и тип регистрации'
 
   if (resolvedMode.value === 'team') {
+    if (!isFilled(draft.data['team_name'])) return 'Введите название команды'
     const players = teamPlayers.value
     for (let i = 0; i < players.length; i++) {
       const p = players[i]
@@ -255,6 +256,15 @@ async function submit() {
     <div class="card" v-if="resolvedMode === 'team'">
       <div class="hint" style="margin-bottom: 14px">
         Состав команды: 5 основных игроков + 3 запасных. Для запасных поля необязательные.
+      </div>
+
+      <div class="field">
+        <div class="label">Название команды</div>
+        <input
+          :value="(draft.data['team_name'] as string | undefined) ?? ''"
+          required
+          @input="draft.data['team_name'] = ($event.target as HTMLInputElement).value"
+        />
       </div>
 
       <div class="player-block" v-for="(player, idx) in teamPlayers" :key="idx">
