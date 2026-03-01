@@ -18,24 +18,24 @@ const savingState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 const lastError = ref<string | null>(null)
 
 const faculties = [
-  'Факультет ИТ и анализа больших данных',
-  'Факультет международных экономических отношений',
-  'Факультет экономики и бизнеса',
-  'Факультет финансов',
-  'Факультет налогов, аудита и бизнес-анализа',
-  'Юридический факультет',
-  'Другое',
+  'НАБ',
+  'ВШУ',
+  'ФЭБ',
+  'МЭО',
+  'СНиМК',
+  'ИТиАБД',
+  'Юрфак',
+  'Финфак',
 ]
 
 type TeamRole = 'main' | 'reserve'
 type TeamPlayer = {
   role: TeamRole
-  platform_id: string
+  full_name: string
   game_nick: string
   steam_url: string
   faceit_url: string
-  full_name: string
-  birth_date: string
+  faculty: string
   telegram: string
 }
 
@@ -72,8 +72,6 @@ function setMode(v: RegistrationMode) {
   if (v === 'team') ensureTeamPlayers()
 }
 
-const facultyIsOther = computed(() => (draft.data['faculty'] as string | undefined) === 'Другое')
-
 const teamPlayers = computed<TeamPlayer[]>(() => {
   ensureTeamPlayers()
   return (draft.data['team_players'] as TeamPlayer[]) ?? []
@@ -92,12 +90,11 @@ function ensureTeamPlayers() {
     const old = existing[i] ?? {}
     normalized.push({
       role,
-      platform_id: String(old.platform_id ?? ''),
+      full_name: String(old.full_name ?? ''),
       game_nick: String(old.game_nick ?? ''),
       steam_url: String(old.steam_url ?? ''),
       faceit_url: String(old.faceit_url ?? ''),
-      full_name: String(old.full_name ?? ''),
-      birth_date: String(old.birth_date ?? ''),
+      faculty: String(old.faculty ?? ''),
       telegram: String(old.telegram ?? ''),
     })
   }
@@ -110,6 +107,46 @@ const statusText = computed(() => {
   if (savingState.value === 'error') return lastError.value ?? 'Ошибка сохранения'
   return ''
 })
+
+function isFilled(v: unknown): boolean {
+  return typeof v === 'string' ? v.trim().length > 0 : false
+}
+
+function validateBeforeSubmit(): string | null {
+  if (!draft.discipline || !resolvedMode.value) return 'Выберите дисциплину и тип регистрации'
+
+  if (resolvedMode.value === 'team') {
+    const players = teamPlayers.value
+    for (let i = 0; i < players.length; i++) {
+      const p = players[i]
+      if (!p) continue
+      const isMain = i < 5
+      if (!isMain) continue
+
+      if (!isFilled(p.full_name)) return `Игрок ${i + 1}: заполните ФИО`
+      if (!isFilled(p.game_nick)) return `Игрок ${i + 1}: заполните никнейм в игре`
+      if ((draft.discipline === 'CS2' || draft.discipline === 'DOTA2') && !isFilled(p.steam_url)) {
+        return `Игрок ${i + 1}: заполните ссылку Steam`
+      }
+      if (draft.discipline === 'CS2' && !isFilled(p.faceit_url)) {
+        return `Игрок ${i + 1}: заполните ссылку Faceit`
+      }
+      if (!isFilled(p.faculty)) return `Игрок ${i + 1}: выберите факультет`
+      if (!isFilled(p.telegram)) return `Игрок ${i + 1}: заполните Telegram`
+    }
+  } else {
+    if (!isFilled(draft.data['full_name'])) return 'Заполните ФИО'
+    if (!isFilled(draft.data['game_nick'])) return 'Заполните никнейм в игре'
+    if ((draft.discipline === 'CS2' || draft.discipline === 'DOTA2') && !isFilled(draft.data['steam_url'])) {
+      return 'Заполните ссылку Steam'
+    }
+    if (draft.discipline === 'CS2' && !isFilled(draft.data['faceit_url'])) return 'Заполните ссылку Faceit'
+    if (!isFilled(draft.data['faculty'])) return 'Выберите факультет'
+    if (!isFilled(draft.data['telegram'])) return 'Заполните Telegram'
+  }
+
+  return null
+}
 
 telegramReady()
 
@@ -149,6 +186,13 @@ watch(
 )
 
 async function submit() {
+  const validationError = validateBeforeSubmit()
+  if (validationError) {
+    savingState.value = 'error'
+    lastError.value = validationError
+    return
+  }
+
   savingState.value = 'saving'
   lastError.value = null
   try {
@@ -189,63 +233,8 @@ async function submit() {
     </div>
 
     <div class="card" v-if="resolvedMode === 'team'">
-      <div class="hint" style="margin-bottom: 14px">Состав команды: 5 основных игроков + 3 запасных.</div>
-
-      <div class="row">
-        <div class="field">
-          <div class="label">ФИО капитана</div>
-          <input
-            :value="(draft.data['captain_full_name'] as string | undefined) ?? ''"
-            @input="draft.data['captain_full_name'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-        <div class="field">
-          <div class="label">Телефон капитана</div>
-          <input
-            :value="(draft.data['captain_phone'] as string | undefined) ?? ''"
-            inputmode="tel"
-            placeholder="+7…"
-            @input="draft.data['captain_phone'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <div class="label">Ник в Telegram</div>
-          <input
-            :value="(draft.data['captain_tg_nick'] as string | undefined) ?? ''"
-            placeholder="@username"
-            @input="draft.data['captain_tg_nick'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-        <div class="field">
-          <div class="label">Ник в VK</div>
-          <input
-            :value="(draft.data['captain_vk_nick'] as string | undefined) ?? ''"
-            placeholder="vk.com/… или ник"
-            @input="draft.data['captain_vk_nick'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-      </div>
-
-      <div class="field">
-        <div class="label">Факультет</div>
-        <select
-          :value="(draft.data['faculty'] as string | undefined) ?? ''"
-          @change="draft.data['faculty'] = ($event.target as HTMLSelectElement).value"
-        >
-          <option value="" disabled>Выберите факультет</option>
-          <option v-for="f in faculties" :key="f" :value="f">{{ f }}</option>
-        </select>
-      </div>
-
-      <div class="field" v-if="facultyIsOther">
-        <div class="label">Ваш вариант факультета</div>
-        <input
-          :value="(draft.data['faculty_other'] as string | undefined) ?? ''"
-          @input="draft.data['faculty_other'] = ($event.target as HTMLInputElement).value"
-        />
+      <div class="hint" style="margin-bottom: 14px">
+        Состав команды: 5 основных игроков + 3 запасных. Для запасных поля необязательные.
       </div>
 
       <div class="player-block" v-for="(player, idx) in teamPlayers" :key="idx">
@@ -254,95 +243,99 @@ async function submit() {
           <span class="player-role">{{ player.role === 'main' ? 'Основной' : 'Запасной' }}</span>
         </div>
 
-        <div class="row">
-          <div class="field">
-            <div class="label">ID платформы</div>
-            <input
-              v-model="player.platform_id"
-              placeholder="1156"
-            />
-          </div>
-          <div class="field">
-            <div class="label">Никнейм на сайте</div>
-            <input
-              v-model="player.game_nick"
-              placeholder="Player"
-            />
-          </div>
+        <div class="field">
+          <div class="label">ФИО</div>
+          <input v-model="player.full_name" :required="idx < 5" />
         </div>
 
         <div class="field">
-          <div class="label">Ссылка на аккаунт в Steam</div>
-          <input v-model="player.steam_url" placeholder="https://steamcommunity.com/profiles/..." />
+          <div class="label">Никнейм в игре</div>
+          <input v-model="player.game_nick" :required="idx < 5" />
+        </div>
+
+        <div class="field" v-if="draft.discipline === 'CS2' || draft.discipline === 'DOTA2'">
+          <div class="label">Ссылка Steam</div>
+          <input v-model="player.steam_url" placeholder="https://steamcommunity.com/profiles/..." :required="idx < 5" />
         </div>
 
         <div class="field" v-if="draft.discipline === 'CS2'">
-          <div class="label">Ссылка на аккаунт в Faceit</div>
-          <input v-model="player.faceit_url" placeholder="https://www.faceit.com/ru/players/..." />
+          <div class="label">Ссылка Faceit</div>
+          <input v-model="player.faceit_url" placeholder="https://www.faceit.com/ru/players/..." :required="idx < 5" />
         </div>
 
         <div class="field">
-          <div class="label">ФИО</div>
-          <input v-model="player.full_name" />
-        </div>
-
-        <div class="field">
-          <div class="label">Дата рождения</div>
-          <input v-model="player.birth_date" placeholder="дд.мм.гггг" />
+          <div class="label">Факультет</div>
+          <select v-model="player.faculty" :required="idx < 5">
+            <option value="" disabled>Выберите факультет</option>
+            <option v-for="f in faculties" :key="f" :value="f">{{ f }}</option>
+          </select>
         </div>
 
         <div class="field">
           <div class="label">Telegram</div>
-          <input v-model="player.telegram" placeholder="@username" />
+          <input v-model="player.telegram" placeholder="@username" :required="idx < 5" />
         </div>
       </div>
     </div>
 
     <div class="card" v-if="resolvedMode === 'individual'">
-      <div class="row">
-        <div class="field">
-          <div class="label">ФИО</div>
-          <input
-            :value="(draft.data['full_name'] as string | undefined) ?? ''"
-            @input="draft.data['full_name'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-        <div class="field">
-          <div class="label">Телефон</div>
-          <input
-            :value="(draft.data['phone'] as string | undefined) ?? ''"
-            inputmode="tel"
-            placeholder="+7…"
-            @input="draft.data['phone'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="field">
-          <div class="label">Ник в Telegram</div>
-          <input
-            :value="(draft.data['tg_nick'] as string | undefined) ?? ''"
-            placeholder="@username"
-            @input="draft.data['tg_nick'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
-        <div class="field">
-          <div class="label">Ник в VK</div>
-          <input
-            :value="(draft.data['vk_nick'] as string | undefined) ?? ''"
-            placeholder="vk.com/… или ник"
-            @input="draft.data['vk_nick'] = ($event.target as HTMLInputElement).value"
-          />
-        </div>
+      <div class="field">
+        <div class="label">ФИО</div>
+        <input
+          :value="(draft.data['full_name'] as string | undefined) ?? ''"
+          required
+          @input="draft.data['full_name'] = ($event.target as HTMLInputElement).value"
+        />
       </div>
 
       <div class="field">
-        <div class="label">Учебное заведение</div>
+        <div class="label">Никнейм в игре</div>
         <input
-          :value="(draft.data['institution'] as string | undefined) ?? ''"
-          placeholder="Например: Финансовый университет"
-          @input="draft.data['institution'] = ($event.target as HTMLInputElement).value"
+          :value="(draft.data['game_nick'] as string | undefined) ?? ''"
+          required
+          @input="draft.data['game_nick'] = ($event.target as HTMLInputElement).value"
+        />
+      </div>
+
+      <div class="field" v-if="draft.discipline === 'CS2' || draft.discipline === 'DOTA2'">
+        <div class="label">Ссылка Steam</div>
+        <input
+          :value="(draft.data['steam_url'] as string | undefined) ?? ''"
+          placeholder="https://steamcommunity.com/profiles/..."
+          required
+          @input="draft.data['steam_url'] = ($event.target as HTMLInputElement).value"
+        />
+      </div>
+
+      <div class="field" v-if="draft.discipline === 'CS2'">
+        <div class="label">Ссылка Faceit</div>
+        <input
+          :value="(draft.data['faceit_url'] as string | undefined) ?? ''"
+          placeholder="https://www.faceit.com/ru/players/..."
+          required
+          @input="draft.data['faceit_url'] = ($event.target as HTMLInputElement).value"
+        />
+      </div>
+
+      <div class="field">
+        <div class="label">Факультет</div>
+        <select
+          :value="(draft.data['faculty'] as string | undefined) ?? ''"
+          required
+          @change="draft.data['faculty'] = ($event.target as HTMLSelectElement).value"
+        >
+          <option value="" disabled>Выберите факультет</option>
+          <option v-for="f in faculties" :key="f" :value="f">{{ f }}</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div class="label">Telegram</div>
+        <input
+          :value="(draft.data['telegram'] as string | undefined) ?? ''"
+          placeholder="@username"
+          required
+          @input="draft.data['telegram'] = ($event.target as HTMLInputElement).value"
         />
       </div>
     </div>
