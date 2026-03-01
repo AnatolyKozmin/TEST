@@ -27,6 +27,7 @@ const faculties = [
   'ИТиАБД',
   'Юрфак',
   'Финфак',
+  'Другое',
 ]
 
 type TeamRole = 'main' | 'reserve'
@@ -37,6 +38,7 @@ type TeamPlayer = {
   steam_url: string
   faceit_url: string
   faculty: string
+  faculty_other: string
   telegram: string
 }
 
@@ -96,6 +98,7 @@ function ensureTeamPlayers() {
       steam_url: String(old.steam_url ?? ''),
       faceit_url: String(old.faceit_url ?? ''),
       faculty: String(old.faculty ?? ''),
+      faculty_other: String(old.faculty_other ?? ''),
       telegram: String(old.telegram ?? ''),
     })
   }
@@ -134,6 +137,9 @@ function validateBeforeSubmit(): string | null {
         return `Игрок ${i + 1}: заполните ссылку Faceit`
       }
       if (!isFilled(p.faculty)) return `Игрок ${i + 1}: выберите факультет`
+      if (p.faculty === 'Другое' && !isFilled(p.faculty_other)) {
+        return `Игрок ${i + 1}: заполните свой факультет`
+      }
       if (!isFilled(p.telegram)) return `Игрок ${i + 1}: заполните Telegram`
     }
   } else {
@@ -144,6 +150,9 @@ function validateBeforeSubmit(): string | null {
     }
     if (draft.discipline === 'CS2' && !isFilled(draft.data['faceit_url'])) return 'Заполните ссылку Faceit'
     if (!isFilled(draft.data['faculty'])) return 'Выберите факультет'
+    if (draft.data['faculty'] === 'Другое' && !isFilled(draft.data['faculty_other'])) {
+      return 'Заполните свой факультет'
+    }
     if (!isFilled(draft.data['telegram'])) return 'Заполните Telegram'
   }
 
@@ -301,6 +310,11 @@ async function submit() {
           </select>
         </div>
 
+        <div class="field" v-if="player.faculty === 'Другое'">
+          <div class="label">Свой факультет</div>
+          <input v-model="player.faculty_other" :required="idx < 5" />
+        </div>
+
         <div class="field">
           <div class="label">Telegram</div>
           <input v-model="player.telegram" placeholder="@username" :required="idx < 5" />
@@ -357,6 +371,15 @@ async function submit() {
           <option value="" disabled>Выберите факультет</option>
           <option v-for="f in faculties" :key="f" :value="f">{{ f }}</option>
         </select>
+      </div>
+
+      <div class="field" v-if="draft.data['faculty'] === 'Другое'">
+        <div class="label">Свой факультет</div>
+        <input
+          :value="(draft.data['faculty_other'] as string | undefined) ?? ''"
+          required
+          @input="draft.data['faculty_other'] = ($event.target as HTMLInputElement).value"
+        />
       </div>
 
       <div class="field">
