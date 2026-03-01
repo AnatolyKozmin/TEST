@@ -27,6 +27,18 @@ const faculties = [
   'Другое',
 ]
 
+type TeamRole = 'main' | 'reserve'
+type TeamPlayer = {
+  role: TeamRole
+  platform_id: string
+  game_nick: string
+  steam_url: string
+  faceit_url: string
+  full_name: string
+  birth_date: string
+  telegram: string
+}
+
 const draft = reactive<DraftPayload>({
   discipline: null,
   mode: null,
@@ -43,6 +55,7 @@ const resolvedMode = computed<RegistrationMode | null>(() => {
 function ensureDefaults() {
   if (draft.discipline === 'FC26') draft.mode = 'individual'
   if (isTeamAllowed.value && !draft.mode) draft.mode = 'team'
+  if (isTeamAllowed.value && draft.mode === 'team') ensureTeamPlayers()
 }
 
 function setDiscipline(v: Discipline) {
@@ -52,9 +65,37 @@ function setDiscipline(v: Discipline) {
 
 function setMode(v: RegistrationMode) {
   draft.mode = v
+  if (v === 'team') ensureTeamPlayers()
 }
 
 const facultyIsOther = computed(() => (draft.data['faculty'] as string | undefined) === 'Другое')
+
+const teamPlayers = computed<TeamPlayer[]>(() => {
+  ensureTeamPlayers()
+  return (draft.data['team_players'] as TeamPlayer[]) ?? []
+})
+
+function ensureTeamPlayers() {
+  const existing = Array.isArray(draft.data['team_players']) ? (draft.data['team_players'] as Partial<TeamPlayer>[]) : []
+  const normalized: TeamPlayer[] = []
+
+  for (let i = 0; i < 8; i++) {
+    const role: TeamRole = i < 5 ? 'main' : 'reserve'
+    const old = existing[i] ?? {}
+    normalized.push({
+      role,
+      platform_id: String(old.platform_id ?? ''),
+      game_nick: String(old.game_nick ?? ''),
+      steam_url: String(old.steam_url ?? ''),
+      faceit_url: String(old.faceit_url ?? ''),
+      full_name: String(old.full_name ?? ''),
+      birth_date: String(old.birth_date ?? ''),
+      telegram: String(old.telegram ?? ''),
+    })
+  }
+
+  draft.data['team_players'] = normalized
+}
 
 const statusText = computed(() => {
   if (savingState.value === 'saving') return 'Сохраняем черновик…'
@@ -145,14 +186,7 @@ async function submit() {
     </div>
 
     <div class="card" v-if="resolvedMode === 'team'">
-      <div class="field">
-        <div class="label">Участники команды</div>
-        <textarea
-          :value="(draft.data['team_members'] as string | undefined) ?? ''"
-          placeholder="ФИО и ники всех участников (по строке на человека)"
-          @input="draft.data['team_members'] = ($event.target as HTMLTextAreaElement).value"
-        />
-      </div>
+      <div class="hint" style="margin-bottom: 14px">Состав команды: 5 основных игроков + 3 запасных.</div>
 
       <div class="row">
         <div class="field">
@@ -211,35 +245,52 @@ async function submit() {
         />
       </div>
 
-      <div class="card" style="margin: 12px 0 0" v-if="draft.discipline === 'CS2'">
+      <div class="player-block" v-for="(player, idx) in teamPlayers" :key="idx">
+        <div class="player-title">
+          Игрок {{ idx + 1 }}
+          <span class="player-role">{{ player.role === 'main' ? 'Основной' : 'Запасной' }}</span>
+        </div>
+
         <div class="row">
           <div class="field">
-            <div class="label">Steam (ссылка)</div>
+            <div class="label">ID платформы</div>
             <input
-              :value="(draft.data['steam_url'] as string | undefined) ?? ''"
-              placeholder="https://steamcommunity.com/…"
-              @input="draft.data['steam_url'] = ($event.target as HTMLInputElement).value"
+              v-model="player.platform_id"
+              placeholder="1156"
             />
           </div>
           <div class="field">
-            <div class="label">Faceit (ссылка)</div>
+            <div class="label">Никнейм на сайте</div>
             <input
-              :value="(draft.data['faceit_url'] as string | undefined) ?? ''"
-              placeholder="https://www.faceit.com/…"
-              @input="draft.data['faceit_url'] = ($event.target as HTMLInputElement).value"
+              v-model="player.game_nick"
+              placeholder="Player"
             />
           </div>
         </div>
-      </div>
 
-      <div class="card" style="margin: 12px 0 0" v-if="draft.discipline === 'DOTA2'">
         <div class="field">
-          <div class="label">Steam (ссылка)</div>
-          <input
-            :value="(draft.data['steam_url'] as string | undefined) ?? ''"
-            placeholder="https://steamcommunity.com/…"
-            @input="draft.data['steam_url'] = ($event.target as HTMLInputElement).value"
-          />
+          <div class="label">Ссылка на аккаунт в Steam</div>
+          <input v-model="player.steam_url" placeholder="https://steamcommunity.com/profiles/..." />
+        </div>
+
+        <div class="field" v-if="draft.discipline === 'CS2'">
+          <div class="label">Ссылка на аккаунт в Faceit</div>
+          <input v-model="player.faceit_url" placeholder="https://www.faceit.com/ru/players/..." />
+        </div>
+
+        <div class="field">
+          <div class="label">ФИО</div>
+          <input v-model="player.full_name" />
+        </div>
+
+        <div class="field">
+          <div class="label">Дата рождения</div>
+          <input v-model="player.birth_date" placeholder="дд.мм.гггг" />
+        </div>
+
+        <div class="field">
+          <div class="label">Telegram</div>
+          <input v-model="player.telegram" placeholder="@username" />
         </div>
       </div>
     </div>
