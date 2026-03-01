@@ -6,6 +6,7 @@ import bgImageUrl from '../assets/tg-app-bg.png'
 import {
   type Discipline,
   type DraftPayload,
+  MissingTelegramInitDataError,
   type RegistrationMode,
   loadDraft,
   saveDraft,
@@ -177,6 +178,10 @@ watch(
         await saveDraft({ discipline: draft.discipline, mode: resolvedMode.value, data: draft.data })
         savingState.value = 'saved'
       } catch (e) {
+        if (e instanceof MissingTelegramInitDataError) {
+          savingState.value = 'idle'
+          return
+        }
         savingState.value = 'error'
         lastError.value = e instanceof Error ? e.message : 'Ошибка сохранения'
       }
@@ -200,6 +205,11 @@ async function submit() {
     savingState.value = 'saved'
     router.push('/')
   } catch (e) {
+    if (e instanceof MissingTelegramInitDataError) {
+      savingState.value = 'error'
+      lastError.value = 'Откройте мини-апп через Telegram (через кнопку в боте /start).'
+      return
+    }
     savingState.value = 'error'
     lastError.value = e instanceof Error ? e.message : 'Ошибка отправки'
   }

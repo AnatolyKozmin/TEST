@@ -8,4 +8,5 @@ redis==5.2.1
 
 SQLAlchemy==2.0.38
 asyncpg==0.30.0
+httpx==0.28.1
 

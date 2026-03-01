@@ -9,11 +9,20 @@ export type DraftPayload = {
   data: Record<string, unknown>
 }
 
+export class MissingTelegramInitDataError extends Error {
+  constructor() {
+    super('Missing Telegram initData')
+    this.name = 'MissingTelegramInitDataError'
+  }
+}
+
 async function apiFetch(path: string, init: RequestInit) {
   const initData = getTelegramInitData()
+  if (!initData) throw new MissingTelegramInitDataError()
+
   const headers = new Headers(init.headers || {})
   headers.set('Content-Type', 'application/json')
-  if (initData) headers.set('X-Telegram-Init-Data', initData)
+  headers.set('X-Telegram-Init-Data', initData)
 
   const res = await fetch(`/api${path}`, { ...init, headers })
   if (!res.ok) {

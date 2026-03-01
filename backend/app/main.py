@@ -1,6 +1,9 @@
 import json
+import logging
+from typing import Any
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Response
+import httpx
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import insert
 
@@ -12,6 +15,7 @@ from .telegram_auth import TelegramWebAppUser, verify_telegram_init_data
 
 
 app = FastAPI(title="FCL Mini App API")
+logger = logging.getLogger(__name__)
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,6 +41,55 @@ async def get_tg_user(x_telegram_init_data: str | None = Header(default=None)) -
 
 def _draft_key(tg_user_id: int) -> str:
     return f"draft:{tg_user_id}"
+
+
+def _safe(v: Any) -> str:
+    if v is None:
+        return "-"
+    s = str(v).strip()
+    return s if s else "-"
+
+
+def _build_submission_message(payload: DraftPayload) -> str:
+    lines = [
+        "Заявка успешно отправлена!",
+        "",
+        f"Дисциплина: {_safe(payload.discipline.value if payload.discipline else None)}",
+        f"Тип: {_safe(payload.mode.value if payload.mode else None)}",
+    ]
+
+    data = payload.data or {}
+    if payload.mode == RegistrationMode.team:
+        players = data.get("team_players")
+        if isinstance(players, list):
+            lines.append("")
+            lines.append("Состав команды:")
+            for i, p in enumerate(players, start=1):
+                if not isinstance(p, dict):
+                    continue
+                role = "осн." if i <= 5 else "зап."
+                lines.append(
+                    f"{i}. [{role}] {_safe(p.get('full_name'))} | ник: {_safe(p.get('game_nick'))} | tg: {_safe(p.get('telegram'))}"
+                )
+    else:
+        lines.append("")
+        lines.append("Данные участника:")
+        lines.append(f"ФИО: {_safe(data.get('full_name'))}")
+        lines.append(f"Ник: {_safe(data.get('game_nick'))}")
+        lines.append(f"Telegram: {_safe(data.get('telegram'))}")
+
+    return "\n".join(lines)
+
+
+async def _send_telegram_notification(chat_id: int, text: str):
+    url = f"https://api.telegram.org/bot{settings.bot_token}/sendMessage"
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            res = await client.post(url, json={"chat_id": chat_id, "text": text, "disable_web_page_preview": True})
+            if not res.is_success:
+                logger.warning("Telegram sendMessage failed: chat_id=%s status=%s body=%s", chat_id, res.status_code, res.text)
+    except Exception:
+        logger.exception("Failed to send Telegram notification to chat_id=%s", chat_id)
 
 
 @app.on_event("startup")
@@ -78,7 +131,12 @@ async def put_draft(draft: DraftPayload, user: TelegramWebAppUser = Depends(get_
 
 
 @app.post("/api/submit", status_code=204)
-async def submit(draft: DraftPayload, user: TelegramWebAppUser = Depends(get_tg_user), x_telegram_init_data: str | None = Header(default=None)):
+async def submit(
+    draft: DraftPayload,
+    background_tasks: BackgroundTasks,
+    user: TelegramWebAppUser = Depends(get_tg_user),
+    x_telegram_init_data: str | None = Header(default=None),
+):
     if not draft.discipline or not draft.mode:
         raise HTTPException(status_code=422, detail="discipline and mode are required")
 
@@ -107,6 +165,9 @@ async def submit(draft: DraftPayload, user: TelegramWebAppUser = Depends(get_tg_
             )
         )
         await session.commit()
+
+    message = _build_submission_message(draft)
+    background_tasks.add_task(_send_telegram_notification, user.id, message)
 
     await redis.delete(_draft_key(user.id))
     return Response(status_code=204)
