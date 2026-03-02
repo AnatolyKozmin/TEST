@@ -186,15 +186,17 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Галерея фотографий -->
-          <div class="hero__gallery">
-            <div class="hero__photo hero__photo--left">
-              <img src="@/assets/hero-left.png" alt="Турнир FCL" />
-            </div>
-            <div class="hero__photo hero__photo--center">
-              <img src="@/assets/hero-center.png" alt="Турнир FCL" />
-            </div>
-            <div class="hero__photo hero__photo--right">
-              <img src="@/assets/hero-right.png" alt="Турнир FCL" />
+          <div class="hero__gallery-scale">
+            <div class="hero__gallery">
+              <div class="hero__photo hero__photo--left">
+                <img src="@/assets/hero-left.png" alt="Турнир FCL" />
+              </div>
+              <div class="hero__photo hero__photo--center">
+                <img src="@/assets/hero-center.png" alt="Турнир FCL" />
+              </div>
+              <div class="hero__photo hero__photo--right">
+                <img src="@/assets/hero-right.png" alt="Турнир FCL" />
+              </div>
             </div>
           </div>
         </div>
@@ -233,20 +235,21 @@ onBeforeUnmount(() => {
       <section class="section section--schedule">
         <h2 class="section__title section__title--outline">РАСПИСАНИЕ</h2>
 
-        <!-- В макете: 3 картинки фоном + горизонтальная линия и точки поверх -->
-        <div class="schedule-visual" aria-label="Примерное расписание">
-          <div class="schedule-visual__inner">
-            <div class="schedule-visual__bg" aria-hidden="true">
-              <img src="@/assets/schedule-1.png" alt="" class="schedule-visual__bg-img" />
-              <img src="@/assets/schedule-2.png" alt="" class="schedule-visual__bg-img" />
-              <img src="@/assets/schedule-3.png" alt="" class="schedule-visual__bg-img" />
-            </div>
+        <div class="schedule-visual-scale">
+          <!-- В макете: 3 картинки фоном + горизонтальная линия и точки поверх -->
+          <div class="schedule-visual" aria-label="Примерное расписание">
+            <div class="schedule-visual__inner">
+              <div class="schedule-visual__bg" aria-hidden="true">
+                <img src="@/assets/schedule-1.png" alt="" class="schedule-visual__bg-img" />
+                <img src="@/assets/schedule-2.png" alt="" class="schedule-visual__bg-img" />
+                <img src="@/assets/schedule-3.png" alt="" class="schedule-visual__bg-img" />
+              </div>
 
-            <!-- Оверлей центрируем по Figma-артборду 1440px -->
-            <div class="schedule-visual__overlay">
-              <div class="schedule-visual__segment schedule-visual__segment--1" aria-hidden="true"></div>
-              <div class="schedule-visual__segment schedule-visual__segment--2" aria-hidden="true"></div>
-              <div class="schedule-visual__segment schedule-visual__segment--3" aria-hidden="true"></div>
+              <!-- Оверлей центрируем по Figma-артборду 1440px -->
+              <div class="schedule-visual__overlay">
+                <div class="schedule-visual__segment schedule-visual__segment--1" aria-hidden="true"></div>
+                <div class="schedule-visual__segment schedule-visual__segment--2" aria-hidden="true"></div>
+                <div class="schedule-visual__segment schedule-visual__segment--3" aria-hidden="true"></div>
 
               <div class="schedule-step" style="--x: 11.1806%; --label-w: 215px;">
                 <div class="schedule-step__circle schedule-step__circle--sm">
@@ -275,13 +278,14 @@ onBeforeUnmount(() => {
                 <div class="schedule-step__label">Начало регистрации зрителей</div>
               </div>
 
-              <div class="schedule-step schedule-step--final" style="--x: 80.625%; --label-w: 134px;">
-                <div class="schedule-step__circle schedule-step__circle--lg">
-                  <img src="@/assets/schedule-trophy.svg" alt="" aria-hidden="true" class="schedule-step__trophy" />
+                <div class="schedule-step schedule-step--final" style="--x: 80.625%; --label-w: 134px;">
+                  <div class="schedule-step__circle schedule-step__circle--lg">
+                    <img src="@/assets/schedule-trophy.svg" alt="" aria-hidden="true" class="schedule-step__trophy" />
+                  </div>
+                  <div class="schedule-step__vline schedule-step__vline--final" aria-hidden="true"></div>
+                  <div class="schedule-step__date">28.03</div>
+                  <div class="schedule-step__label schedule-step__label--center">Гранд-финал</div>
                 </div>
-                <div class="schedule-step__vline schedule-step__vline--final" aria-hidden="true"></div>
-                <div class="schedule-step__date">28.03</div>
-                <div class="schedule-step__label schedule-step__label--center">Гранд-финал</div>
               </div>
             </div>
           </div>
@@ -355,9 +359,6 @@ onBeforeUnmount(() => {
             </p>
             <div class="cta__actions">
               <a href="https://t.me/fcl_26" target="_blank" rel="noreferrer" class="cta__button">Подписаться</a>
-              <div class="cta__telegram-icon">
-                <img src="@/assets/icon-telegram-circle.png" alt="Telegram" />
-              </div>
             </div>
           </div>
         </div>
@@ -606,7 +607,7 @@ onBeforeUnmount(() => {
 .hero__bg {
   position: absolute;
   top: 302px;
-  right: -360px;
+  right: -320px;
   width: 754px;
   height: 733px;
   z-index: 1;
@@ -622,13 +623,11 @@ onBeforeUnmount(() => {
 .hero__character {
   position: absolute;
   top: 29px;
-  left: -240px;
+  left: -440px;
   width: 521px;
   height: 554px;
-  z-index: 4;
+  z-index: 1;
   pointer-events: none;
-  transform: rotate(-14deg);
-  transform-origin: center;
 }
 
 .hero__character-image {
@@ -716,6 +715,10 @@ onBeforeUnmount(() => {
   overflow: visible;
 }
 
+.hero__gallery-scale {
+  width: 100%;
+}
+
 .hero__photo {
   flex: 0 1 auto;
   min-width: 0;
@@ -784,6 +787,15 @@ onBeforeUnmount(() => {
 .reveal-on-scroll.is-visible {
   opacity: 1;
   transform: translate3d(0, 0, 0);
+}
+
+/* Keep hero gallery scale on mobile while reveal animation runs */
+.hero__gallery.reveal-on-scroll {
+  transform: translate3d(0, 36px, 0) scale(var(--hero-gallery-scale, 1));
+}
+
+.hero__gallery.reveal-on-scroll.is-visible {
+  transform: translate3d(0, 0, 0) scale(var(--hero-gallery-scale, 1));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -887,6 +899,10 @@ onBeforeUnmount(() => {
   margin-right: calc(50% - 50vw);
   overflow-x: auto;
   padding: 0;
+}
+
+.schedule-visual-scale {
+  width: 100%;
 }
 
 .schedule-visual__inner {
@@ -1174,6 +1190,7 @@ onBeforeUnmount(() => {
 .section--stats .section__title {
   position: relative;
   z-index: 1;
+  text-align: center;
 }
 
 .stats-layout {
@@ -1410,9 +1427,9 @@ onBeforeUnmount(() => {
 }
 
 .cta__actions {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
 }
 
 .cta__button {
@@ -1428,17 +1445,6 @@ onBeforeUnmount(() => {
   border-radius: 0;
 }
 
-.cta__telegram-icon {
-  width: 48px;
-  height: 48px;
-}
-
-.cta__telegram-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
 /* PARTNERS */
 .section--partners {
   max-width: none;
@@ -1451,6 +1457,7 @@ onBeforeUnmount(() => {
   margin-left: auto;
   margin-right: auto;
   padding: 0 156px;
+  text-align: center;
 }
 
 .partners-marquee {
@@ -1693,11 +1700,27 @@ onBeforeUnmount(() => {
     margin-bottom: 60px;
   }
   
+  .hero__gallery-scale {
+    --hero-gallery-scale: 0.5;
+    height: calc(500px * var(--hero-gallery-scale));
+    display: flex;
+    justify-content: center;
+    overflow: visible;
+    margin-bottom: 64px;
+  }
+
   .hero__gallery {
-    flex-direction: column;
-    align-items: center;
-    min-height: auto;
-    gap: 24px;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: center;
+    gap: -96px;
+    margin-bottom: 0;
+    padding: 0;
+    min-height: 500px;
+    width: 1200px;
+    max-width: none;
+    transform: scale(var(--hero-gallery-scale));
+    transform-origin: top center;
   }
 
   .cta-layout {
@@ -1711,20 +1734,49 @@ onBeforeUnmount(() => {
     height: 260px;
   }
   
-  .hero__photo,
-  .hero__photo--left,
-  .hero__photo--center,
-  .hero__photo--right {
-    align-self: center;
-    max-width: 100%;
-    width: 100%;
-    margin-bottom: 0;
-    transform: none;
-    z-index: auto;
+  .hero__photo {
+    width: auto;
+    max-width: none;
   }
-  
-  .hero__photo:last-child {
-    margin-bottom: 0;
+
+  .hero__photo--left {
+    width: 455px;
+    transform: translateY(-10px) rotate(-9.86deg);
+    z-index: 1;
+  }
+
+  .hero__photo--center {
+    width: 478px;
+    transform: translateY(16px) rotate(-2.38deg);
+    z-index: 2;
+  }
+
+  .hero__photo--right {
+    width: 556px;
+    transform: translateY(-10px) rotate(6deg);
+    z-index: 3;
+  }
+
+  .schedule-visual-scale {
+    --schedule-mobile-scale: 0.62;
+    height: calc(493px * var(--schedule-mobile-scale));
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+  }
+
+  .schedule-visual {
+    width: 1440px;
+    margin: 0;
+    overflow: visible;
+    transform: scale(var(--schedule-mobile-scale));
+    transform-origin: top center;
+  }
+
+  .schedule-visual__inner {
+    width: 1440px;
+    min-width: 0;
+    height: 493px;
   }
   
   .info-grid,
@@ -1734,7 +1786,7 @@ onBeforeUnmount(() => {
 
   /* ИТОГИ: сохраняем десктоп-композицию и просто уменьшаем целиком */
   .stats-layout-scale {
-    --stats-mobile-scale: clamp(0.45, calc((100vw - 64px) / 1128), 0.95);
+    --stats-mobile-scale: 0.62;
     height: calc(463px * var(--stats-mobile-scale));
     overflow: hidden;
     display: flex;
@@ -1842,19 +1894,19 @@ onBeforeUnmount(() => {
   }
 
   .hero__character {
-    left: auto;
-    right: -210px;
-    top: 44px;
+    left: -260px;
+    right: auto;
+    top: 56px;
     width: 360px;
     height: auto;
     opacity: 0.92;
-    transform: rotate(-14deg);
+    transform: none;
   }
 
   .hero__bg {
     right: -240px;
-    top: 254px;
-    width: 560px;
+    top: 280px;
+    width: 520px;
     height: 520px;
   }
 
@@ -1867,6 +1919,7 @@ onBeforeUnmount(() => {
 
   .hero__text {
     margin: 28px auto 36px;
+    text-align: center;
   }
 
   .hero__title {
@@ -1884,39 +1937,13 @@ onBeforeUnmount(() => {
     font-size: clamp(16px, 4.3vw, 20px);
     line-height: 1.28;
     letter-spacing: 0.03em;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .hero__gallery {
-    flex-direction: row;
-    align-items: flex-end;
-    justify-content: center;
-    gap: clamp(-72px, -12vw, -34px);
+  .hero__gallery-scale {
+    --hero-gallery-scale: 0.42;
     margin-bottom: 56px;
-    padding: 0;
-    min-height: 310px;
-  }
-
-  .hero__photo {
-    width: auto;
-    max-width: none;
-  }
-
-  .hero__photo--left {
-    width: clamp(176px, 43vw, 228px);
-    transform: translateY(-6px) rotate(-9.86deg);
-    z-index: 1;
-  }
-
-  .hero__photo--center {
-    width: clamp(186px, 45vw, 238px);
-    transform: translateY(12px) rotate(-2.38deg);
-    z-index: 2;
-  }
-
-  .hero__photo--right {
-    width: clamp(202px, 49vw, 268px);
-    transform: translateY(-6px) rotate(6deg);
-    z-index: 3;
   }
 
   .info-card__head {
@@ -1956,13 +1983,26 @@ onBeforeUnmount(() => {
     height: clamp(90px, 24vw, 128px);
   }
 
+  .schedule-visual-scale {
+    --schedule-mobile-scale: 0.46;
+    height: calc(493px * var(--schedule-mobile-scale));
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+  }
+
   .schedule-visual {
-    overflow-x: auto;
+    width: 1440px;
+    margin: 0;
+    overflow: visible;
+    transform: scale(var(--schedule-mobile-scale));
+    transform-origin: top center;
   }
 
   .schedule-visual__inner {
-    min-width: 900px;
-    height: 460px;
+    width: 1440px;
+    min-width: 0;
+    height: 493px;
   }
 
   .faq-item {
@@ -1996,7 +2036,7 @@ onBeforeUnmount(() => {
   }
 
   .stats-layout-scale {
-    --stats-mobile-scale: clamp(0.32, calc((100vw - 32px) / 1128), 0.82);
+    --stats-mobile-scale: 0.46;
   }
 
   .section--cta {
@@ -2005,6 +2045,13 @@ onBeforeUnmount(() => {
 
   .cta-layout__content {
     text-align: center;
+  }
+
+  .cta-layout__images {
+    width: min(320px, 100%);
+    max-width: 320px;
+    height: 260px;
+    margin: 0 auto;
   }
 
   .cta__text {
@@ -2027,26 +2074,27 @@ onBeforeUnmount(() => {
     font-size: 12px;
   }
 
+  .hero__character {
+    left: -286px;
+    top: 42px;
+  }
+
+  .hero__bg {
+    right: -272px;
+  }
+
   .hero__logo-caption {
     margin: -50px auto 48px;
   }
 
   .hero__gallery {
+    margin-bottom: 0;
+  }
+
+  .hero__gallery-scale {
+    --hero-gallery-scale: 0.34;
+    height: calc(500px * var(--hero-gallery-scale));
     margin-bottom: 42px;
-    gap: clamp(-56px, -11vw, -28px);
-    min-height: 262px;
-  }
-
-  .hero__photo--left {
-    width: clamp(156px, 42vw, 196px);
-  }
-
-  .hero__photo--center {
-    width: clamp(164px, 44vw, 205px);
-  }
-
-  .hero__photo--right {
-    width: clamp(178px, 48vw, 230px);
   }
 
   .section {
@@ -2057,12 +2105,13 @@ onBeforeUnmount(() => {
     font-size: clamp(28px, 7.2vw, 34px);
   }
 
-  .schedule-visual__inner {
-    min-width: 840px;
+  .schedule-visual-scale {
+    --schedule-mobile-scale: 0.34;
+    height: calc(493px * var(--schedule-mobile-scale));
   }
 
   .stats-layout-scale {
-    --stats-mobile-scale: clamp(0.26, calc((100vw - 32px) / 1128), 0.7);
+    --stats-mobile-scale: 0.34;
   }
 }
 </style>
