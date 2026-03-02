@@ -1,0 +1,38 @@
+/* Шрифты из Figma макета */
+/* Cygre - основной шрифт */
+@font-face {
+  font-family: 'Cygre';
+  src: url('./fonts/Cygre-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cygre';
+  src: url('./fonts/Cygre-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Terminator Genisys - для логотипа FCL */
+@font-face {
+  font-family: 'Terminator Genisys';
+  src: url('./fonts/TerminatorGenisys.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Azoft Sans - для описаний */
+@font-face {
+  font-family: 'Azoft Sans';
+  src: url('./fonts/azoft-sans.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Fallback на системные шрифты, если файлы не найдены */
+/* Файлы шрифтов лежат в src/assets/fonts/ */

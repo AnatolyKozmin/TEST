@@ -37,8 +37,15 @@ services:
     image: fcl-miniapp-frontend:latest
     build:
       context: ./frontend
+      args:
+        VITE_BASE_PATH: /tma/
     depends_on:
       - backend
+
+  landing:
+    image: fcl-landing:latest
+    build:
+      context: ./fcl_lend
 
   nginx:
     image: nginx:alpine
@@ -51,6 +58,7 @@ services:
       - ./deploy/nginx/certs/fullchain.crt:/etc/nginx/certs/fullchain.crt:ro
       - ./deploy/nginx/certs/privkey.key:/etc/nginx/certs/privkey.key:ro
     depends_on:
+      - landing
       - frontend
       - backend
 

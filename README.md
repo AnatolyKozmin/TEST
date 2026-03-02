@@ -47,7 +47,7 @@ cp bot/.env.example bot/.env
 
 В `bot/.env`:
 - `BOT_TOKEN=...`
-- `WEBAPP_URL=https://ВАШ_ДОМЕН`
+- `WEBAPP_URL=https://ВАШ_ДОМЕН/tma/`
 
 2) Положи сертификаты в:
 
@@ -68,4 +68,10 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 API требует заголовок `X-Telegram-Init-Data` (Telegram автоматически передаёт его в mini app).
 Для локальной отладки можно передать `initData` через query string, фронт подхватит `?initData=...`.
+
+### Разделение Landing и Mini App
+
+- `https://ВАШ_ДОМЕН/` -> landing (без Telegram SDK)
+- `https://ВАШ_ДОМЕН/tma/` -> Telegram Mini App
+- `https://ВАШ_ДОМЕН/api/` -> backend API
 
