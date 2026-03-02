@@ -9,6 +9,25 @@ export type DraftPayload = {
   data: Record<string, unknown>
 }
 
+export type AdminRegistration = {
+  id: number
+  tg_user_id: number
+  tg_username: string | null
+  tg_first_name: string | null
+  tg_last_name: string | null
+  discipline: string
+  mode: string
+  payload: Record<string, unknown>
+  submitted_at: string | null
+}
+
+export type AdminRegistrationsResponse = {
+  total: number
+  limit: number
+  offset: number
+  items: AdminRegistration[]
+}
+
 export class MissingTelegramInitDataError extends Error {
   constructor() {
     super('Missing Telegram initData')
@@ -44,5 +63,27 @@ export async function loadDraft(): Promise<DraftPayload | null> {
 
 export async function submitRegistration(draft: DraftPayload) {
   await apiFetch('/submit', { method: 'POST', body: JSON.stringify(draft) })
+}
+
+export async function loadAdminRegistrations(params: {
+  discipline?: string
+  mode?: string
+  q?: string
+  limit?: number
+  offset?: number
+}): Promise<AdminRegistrationsResponse> {
+  const query = new URLSearchParams()
+  if (params.discipline) query.set('discipline', params.discipline)
+  if (params.mode) query.set('mode', params.mode)
+  if (params.q) query.set('q', params.q)
+  query.set('limit', String(params.limit ?? 30))
+  query.set('offset', String(params.offset ?? 0))
+
+  const res = await fetch(`/api/admin/registrations?${query.toString()}`)
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '')
+    throw new Error(`API ${res.status}: ${txt}`)
+  }
+  return (await res.json()) as AdminRegistrationsResponse
 }
 

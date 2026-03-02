@@ -5,7 +5,7 @@ from typing import Any
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import desc, func, insert, select
+from sqlalchemy import String, cast, desc, func, insert, or_, select
 
 from .config import settings
 from .db import Registration, SessionLocal, init_db
@@ -216,6 +216,67 @@ async def admin_stats():
                 "submitted_at": r.submitted_at.isoformat() if r.submitted_at else None,
             }
             for r in recent_rows
+        ],
+    }
+
+
+@app.get("/api/admin/registrations")
+async def admin_registrations(
+    discipline: str | None = None,
+    mode: str | None = None,
+    q: str | None = None,
+    limit: int = 30,
+    offset: int = 0,
+):
+    safe_limit = max(1, min(limit, 100))
+    safe_offset = max(0, offset)
+
+    async with SessionLocal() as session:
+        query = select(Registration)
+        count_query = select(func.count()).select_from(Registration)
+
+        if discipline:
+            query = query.where(Registration.discipline == discipline)
+            count_query = count_query.where(Registration.discipline == discipline)
+        if mode:
+            query = query.where(Registration.mode == mode)
+            count_query = count_query.where(Registration.mode == mode)
+        if q:
+            needle = f"%{q.strip()}%"
+            search_condition = or_(
+                Registration.tg_username.ilike(needle),
+                cast(Registration.tg_user_id, String).ilike(needle),
+                cast(Registration.payload, String).ilike(needle),
+            )
+            query = query.where(search_condition)
+            count_query = count_query.where(search_condition)
+
+        total = (await session.execute(count_query)).scalar_one()
+        rows = (
+            await session.execute(
+                query.order_by(desc(Registration.submitted_at), desc(Registration.id))
+                .limit(safe_limit)
+                .offset(safe_offset)
+            )
+        ).scalars().all()
+
+    return {
+        "total": int(total or 0),
+        "limit": safe_limit,
+        "offset": safe_offset,
+        "items": [
+            {
+                "id": r.id,
+                "tg_user_id": r.tg_user_id,
+                "tg_username": r.tg_username,
+                "tg_first_name": r.tg_first_name,
+                "tg_last_name": r.tg_last_name,
+                "discipline": r.discipline,
+                "mode": r.mode,
+                "payload": r.payload,
+                "submitted_at": r.submitted_at.isoformat() if r.submitted_at else None,
+            }
+            for r in rows
         ],
     }
 
