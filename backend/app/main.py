@@ -39,13 +39,6 @@ async def get_tg_user(x_telegram_init_data: str | None = Header(default=None)) -
         raise HTTPException(status_code=401, detail=str(e)) from e
 
 
-def require_admin(x_admin_token: str | None = Header(default=None)):
-    if not settings.admin_token:
-        raise HTTPException(status_code=503, detail="Admin stats disabled: ADMIN_TOKEN is not configured")
-    if not x_admin_token or x_admin_token != settings.admin_token:
-        raise HTTPException(status_code=401, detail="Invalid admin token")
-
-
 def _draft_key(tg_user_id: int) -> str:
     return f"draft:{tg_user_id}"
 
@@ -178,7 +171,7 @@ async def submit(
 
 
 @app.get("/api/admin/stats")
-async def admin_stats(_: None = Depends(require_admin)):
+async def admin_stats():
     async with SessionLocal() as session:
         total = (await session.execute(select(func.count()).select_from(Registration))).scalar_one()
         unique_users = (await session.execute(select(func.count(func.distinct(Registration.tg_user_id))))).scalar_one()

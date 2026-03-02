@@ -1701,7 +1701,7 @@ onBeforeUnmount(() => {
   }
   
   .hero__gallery-scale {
-    --hero-gallery-scale: 0.5;
+    --hero-gallery-scale: clamp(0.44, calc((100vw - 48px) / 1200), 0.54);
     height: calc(500px * var(--hero-gallery-scale));
     display: flex;
     justify-content: center;
@@ -1758,11 +1758,12 @@ onBeforeUnmount(() => {
   }
 
   .schedule-visual-scale {
-    --schedule-mobile-scale: 0.62;
+    --schedule-mobile-scale: clamp(0.56, calc((100vw - 48px) / 1440), 0.66);
     height: calc(493px * var(--schedule-mobile-scale));
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     justify-content: center;
+    padding-bottom: 8px;
   }
 
   .schedule-visual {
@@ -1786,12 +1787,13 @@ onBeforeUnmount(() => {
 
   /* ИТОГИ: сохраняем десктоп-композицию и просто уменьшаем целиком */
   .stats-layout-scale {
-    --stats-mobile-scale: 0.62;
+    --stats-mobile-scale: clamp(0.52, calc((100vw - 48px) / 1128), 0.62);
     height: calc(463px * var(--stats-mobile-scale));
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    padding-bottom: 8px;
   }
 
   .stats-layout {
@@ -1942,8 +1944,12 @@ onBeforeUnmount(() => {
   }
 
   .hero__gallery-scale {
-    --hero-gallery-scale: 0.42;
+    --hero-gallery-scale: clamp(0.34, calc((100vw - 24px) / 1200), 0.44);
     margin-bottom: 56px;
+  }
+
+  .hero__gallery {
+    margin-left: clamp(14px, 4vw, 32px);
   }
 
   .info-card__head {
@@ -1953,8 +1959,12 @@ onBeforeUnmount(() => {
   }
 
   .info-card__title {
-    margin-left: -44px;
+    margin-left: 0;
     text-align: center;
+  }
+
+  .info-card__icon {
+    margin-left: 0;
   }
 
   .info-card__text {
@@ -1984,11 +1994,12 @@ onBeforeUnmount(() => {
   }
 
   .schedule-visual-scale {
-    --schedule-mobile-scale: 0.46;
+    --schedule-mobile-scale: clamp(0.4, calc((100vw - 24px) / 1440), 0.5);
     height: calc(493px * var(--schedule-mobile-scale));
-    overflow: hidden;
+    overflow: visible;
     display: flex;
     justify-content: center;
+    padding-bottom: 10px;
   }
 
   .schedule-visual {
@@ -2036,7 +2047,8 @@ onBeforeUnmount(() => {
   }
 
   .stats-layout-scale {
-    --stats-mobile-scale: 0.46;
+    --stats-mobile-scale: clamp(0.36, calc((100vw - 24px) / 1128), 0.48);
+    padding-bottom: 10px;
   }
 
   .section--cta {
@@ -2092,7 +2104,7 @@ onBeforeUnmount(() => {
   }
 
   .hero__gallery-scale {
-    --hero-gallery-scale: 0.34;
+    --hero-gallery-scale: clamp(0.3, calc((100vw - 20px) / 1200), 0.38);
     height: calc(500px * var(--hero-gallery-scale));
     margin-bottom: 42px;
   }
@@ -2106,12 +2118,14 @@ onBeforeUnmount(() => {
   }
 
   .schedule-visual-scale {
-    --schedule-mobile-scale: 0.34;
+    --schedule-mobile-scale: clamp(0.34, calc((100vw - 20px) / 1440), 0.42);
     height: calc(493px * var(--schedule-mobile-scale));
+    padding-bottom: 12px;
   }
 
   .stats-layout-scale {
-    --stats-mobile-scale: 0.34;
+    --stats-mobile-scale: clamp(0.3, calc((100vw - 20px) / 1128), 0.4);
+    padding-bottom: 12px;
   }
 }
 </style>

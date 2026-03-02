@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     bot_token: str
     webapp_url: str = "http://localhost:5173"
     stats_api_url: str = "http://backend:8000/api/admin/stats"
-    admin_token: str = ""
     admin_user_ids: str = ""
 
     @property

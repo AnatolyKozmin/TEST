@@ -82,15 +82,9 @@ async def stats(message: Message):
     if not _is_admin(message):
         await message.answer("Недостаточно прав для просмотра статистики.")
         return
-    if not settings.admin_token:
-        await message.answer("ADMIN_TOKEN не настроен в bot/.env.")
-        return
     try:
         async with httpx.AsyncClient(timeout=12.0) as client:
-            resp = await client.get(
-                settings.stats_api_url,
-                headers={"X-Admin-Token": settings.admin_token},
-            )
+            resp = await client.get(settings.stats_api_url)
         if resp.status_code != 200:
             await message.answer(f"Не удалось получить статистику: HTTP {resp.status_code}\n{resp.text[:300]}")
             return
