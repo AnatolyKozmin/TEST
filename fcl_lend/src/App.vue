@@ -1467,6 +1467,7 @@ onBeforeUnmount(() => {
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
+  padding: 6px 0;
 }
 
 .partners-marquee__track {
@@ -1481,9 +1482,12 @@ onBeforeUnmount(() => {
 .partners-strip {
   display: block;
   width: 100vw;
-  height: clamp(130px, 11vw, 210px);
+  height: clamp(118px, 10vw, 189px);
   flex: 0 0 100vw;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
+  box-sizing: border-box;
+  padding: 0 clamp(10px, 2vw, 24px);
 }
 
 @keyframes partners-scroll {
@@ -1990,7 +1994,7 @@ onBeforeUnmount(() => {
   }
 
   .partners-strip {
-    height: clamp(90px, 24vw, 128px);
+    height: clamp(84px, 22vw, 120px);
   }
 
   .schedule-visual-scale {
