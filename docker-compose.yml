@@ -41,6 +41,17 @@ services:
     depends_on:
       - backend
 
+  landing:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+    volumes:
+      - ./fcl_lend:/app
+    ports:
+      - "5174:5173"
+    profiles:
+      - landing
+
 volumes:
   pg_data:
 

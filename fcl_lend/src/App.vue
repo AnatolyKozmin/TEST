@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import partnersStrip from '@/assets/partners-strip.svg'
 import contactOleg from '@/assets/contact-oleg.png'
@@ -71,7 +71,16 @@ const contacts = [
 
 const openedFaqIndex = ref(null)
 const mobileMenuOpen = ref(false)
+const statsLayoutScaleEl = ref(null)
+const statsMobileScale = ref(1)
+const heroGalleryScaleEl = ref(null)
+const heroGalleryScale = ref(1)
+const scheduleScaleEl = ref(null)
+const scheduleMobileScale = ref(1)
 let revealObserver = null
+let statsResizeObserver = null
+let heroResizeObserver = null
+let scheduleResizeObserver = null
 
 const toggleFaq = (index) => {
   openedFaqIndex.value = openedFaqIndex.value === index ? null : index
@@ -83,6 +92,34 @@ const toggleMobileMenu = () => {
 
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false
+}
+
+watch(mobileMenuOpen, (isOpen) => {
+  document.body.style.overflow = isOpen ? 'hidden' : ''
+})
+
+const updateStatsScale = () => {
+  const el = statsLayoutScaleEl.value
+  if (!el) return
+  const width = el.clientWidth || 0
+  const nextScale = width > 0 ? Math.min(1, width / 1128) : 1
+  statsMobileScale.value = Number(nextScale.toFixed(4))
+}
+
+const updateHeroGalleryScale = () => {
+  const el = heroGalleryScaleEl.value
+  if (!el) return
+  const width = el.clientWidth || 0
+  const nextScale = width > 0 ? Math.min(1, (width / 1680) * 1.0) : 1
+  heroGalleryScale.value = Number(nextScale.toFixed(4))
+}
+
+const updateScheduleScale = () => {
+  const el = scheduleScaleEl.value
+  if (!el) return
+  const width = el.clientWidth || 0
+  const nextScale = width > 0 ? Math.min(1, width / 980) : 1
+  scheduleMobileScale.value = Number(nextScale.toFixed(4))
 }
 
 onMounted(() => {
@@ -118,10 +155,38 @@ onMounted(() => {
   )
 
   targets.forEach((el) => revealObserver?.observe(el))
+
+  updateStatsScale()
+  updateHeroGalleryScale()
+  updateScheduleScale()
+  window.addEventListener('resize', updateStatsScale)
+  window.addEventListener('resize', updateHeroGalleryScale)
+  window.addEventListener('resize', updateScheduleScale)
+  if ('ResizeObserver' in window) {
+    statsResizeObserver = new ResizeObserver(() => updateStatsScale())
+    if (statsLayoutScaleEl.value) {
+      statsResizeObserver.observe(statsLayoutScaleEl.value)
+    }
+    heroResizeObserver = new ResizeObserver(() => updateHeroGalleryScale())
+    if (heroGalleryScaleEl.value) {
+      heroResizeObserver.observe(heroGalleryScaleEl.value)
+    }
+    scheduleResizeObserver = new ResizeObserver(() => updateScheduleScale())
+    if (scheduleScaleEl.value) {
+      scheduleResizeObserver.observe(scheduleScaleEl.value)
+    }
+  }
 })
 
 onBeforeUnmount(() => {
   revealObserver?.disconnect()
+  statsResizeObserver?.disconnect?.()
+  heroResizeObserver?.disconnect?.()
+  scheduleResizeObserver?.disconnect?.()
+  window.removeEventListener('resize', updateStatsScale)
+  window.removeEventListener('resize', updateHeroGalleryScale)
+  window.removeEventListener('resize', updateScheduleScale)
+  document.body.style.overflow = ''
 })
 </script>
 
@@ -168,25 +233,27 @@ onBeforeUnmount(() => {
         </div>
 
         <div class="hero__container">
-          <!-- Большой логотип FCL -->
-          <div class="hero__fcl-logo">
-            <img src="@/assets/fcl-logo-hero.png" alt="FCL" class="hero__fcl-logo-image" />
+          <!-- Большой логотип FCL и подпись под ним (одинаковая ширина) -->
+          <div class="hero__fcl-logo-wrap">
+            <div class="hero__fcl-logo">
+              <img src="@/assets/fcl-logo-hero.png" alt="FCL" class="hero__fcl-logo-image" />
+            </div>
+            <p class="hero__logo-caption">FINANCIAL CYBERSPORT LEAGUE</p>
           </div>
-          <!-- Маленькая подпись под логотипом -->
-          <p class="hero__logo-caption">FINANCIAL CYBERSPORT LEAGUE</p>
 
           <!-- Текстовый блок -->
           <div class="hero__text">
             <h1 class="hero__title">FINANCIAL CYBERSPORT LEAGUE</h1>
             <p class="hero__subtitle">— больше, чем просто турнир</p>
             <p class="hero__description">
-              Ежегодно мы собираем всех фанатов киберспорта и проводим масштабный турнир по 3 игровым дисциплинам на онлайн-этапе
-              и гранд-финале. Параллельно с турниром в финале работают интерактивные зоны, фотозоны и проходит яркая трансляция.
+              Ежегодно мы собираем всех фанатов киберспорта и проводим масштабный турнир по 3 игровым дисциплинам на онлайн-этапе и гранд-финале.<br />
+              Параллельно с турниром в финале работают множество интерактивных зон, фотозоны<br />
+              и проходит яркая трансляция.
             </p>
           </div>
 
           <!-- Галерея фотографий -->
-          <div class="hero__gallery-scale">
+          <div class="hero__gallery-scale" ref="heroGalleryScaleEl" :style="{ '--hero-gallery-scale': String(heroGalleryScale) }">
             <div class="hero__gallery">
               <div class="hero__photo hero__photo--left">
                 <img src="@/assets/hero-left.png" alt="Турнир FCL" />
@@ -235,7 +302,7 @@ onBeforeUnmount(() => {
       <section class="section section--schedule">
         <h2 class="section__title section__title--outline">РАСПИСАНИЕ</h2>
 
-        <div class="schedule-visual-scale">
+        <div class="schedule-visual-scale" ref="scheduleScaleEl" :style="{ '--schedule-mobile-scale': String(scheduleMobileScale) }">
           <!-- В макете: 3 картинки фоном + горизонтальная линия и точки поверх -->
           <div class="schedule-visual" aria-label="Примерное расписание">
             <div class="schedule-visual__inner">
@@ -297,7 +364,7 @@ onBeforeUnmount(() => {
         <h2 class="section__title">ИТОГИ 25 ГОДА</h2>
 
         <!-- Макет: 3 колонки (310/368/420) с зазором 15px, справа один большой блок -->
-        <div class="stats-layout-scale">
+        <div class="stats-layout-scale" ref="statsLayoutScaleEl" :style="{ '--stats-mobile-scale': String(statsMobileScale) }">
           <div class="stats-layout">
             <div class="stats-col stats-col--left">
               <article class="stats-tile stats-tile--outline stats-tile--sq">
@@ -395,11 +462,11 @@ onBeforeUnmount(() => {
       <!-- ПАРТНЁРЫ -->
       <section class="section section--partners" id="partners">
         <h2 class="section__title">НАМ ДОВЕРЯЮТ</h2>
-        <div class="partners-marquee">
+          <div class="partners-marquee">
           <div class="partners-marquee__track">
-            <img :src="partnersStrip" alt="Партнёры" class="partners-strip" />
-            <img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" />
-            <img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" />
+            <div class="partners-strip-wrap"><img :src="partnersStrip" alt="Партнёры" class="partners-strip" /></div>
+            <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
+            <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
           </div>
         </div>
       </section>
@@ -606,8 +673,8 @@ onBeforeUnmount(() => {
 
 .hero__bg {
   position: absolute;
-  top: 302px;
-  right: -320px;
+  top: 40px;
+  right: -420px;
   width: 754px;
   height: 733px;
   z-index: 1;
@@ -636,11 +703,16 @@ onBeforeUnmount(() => {
   object-fit: contain;
 }
 
-/* Пропорции из Figma: 1140.14 × 565.64, left 143px → подстраивается под ширину экрана */
+/* Обёртка: логотип и подпись одинаковой ширины */
+.hero__fcl-logo-wrap {
+  width: 100%;
+  max-width: min(1300px, 90vw);
+  margin: 0 auto;
+}
+
+/* Пропорции из Figma: 1140.14 × 565.64 */
 .hero__fcl-logo {
   width: 100%;
-  max-width: min(1140px, 79.2vw);
-  margin: 0 auto 0;
   aspect-ratio: 1140.14 / 565.64;
 }
 
@@ -655,31 +727,31 @@ onBeforeUnmount(() => {
 .hero__logo-caption {
   font-family: 'Cygre ExtraBold', 'Cygre', sans-serif;
   font-weight: 800;
-  /* Чуть крупнее и по ширине как лого-блок */
   width: 100%;
-  max-width: min(1140px, 79.2vw);
-  font-size: clamp(26px, 4.6vw, 66px);
+  font-size: clamp(28px, 4.5vw, 72px);
   line-height: 1.05;
   letter-spacing: 0.055em;
   text-shadow: 0 0 0.74px #FFFFFF;
-  margin: clamp(-180px, -12.5vw, -40px) auto clamp(120px, 16vw, 240px);
+  margin: clamp(-220px, -15vw, -60px) 0 clamp(120px, 16vw, 240px);
   text-align: center;
   white-space: nowrap;
 }
 
 .hero__text {
-  max-width: 1127px;
-  margin: 48px auto 72px;
+  max-width: min(1127px, 78.3vw);
+  margin: clamp(140px, 18vw, 260px) auto 72px;
+  padding: 0 clamp(16px, 4vw, 48px);
 }
 
 .hero__title {
   font-family: 'Cygre ExtraBold', 'Cygre', sans-serif;
   font-weight: 800;
-  font-size: 60px;
+  font-size: clamp(36px, 5.8vw, 80px);
   line-height: 1.05;
   letter-spacing: 0.03em;
   margin-bottom: 4px;
   text-shadow: 0 0 0.68px #FFFFFF;
+  white-space: nowrap;
 }
 
 .hero__subtitle {
@@ -692,11 +764,12 @@ onBeforeUnmount(() => {
 }
 
 .hero__description {
-  font-family: 'Azoft Sans', sans-serif;
+  font-family: 'Cygre', sans-serif;
+  font-weight: 400;
   font-size: 30.57px;
-  line-height: 1.16;
+  line-height: 1.28;
   letter-spacing: 0.05em;
-  max-width: 1127px;
+  max-width: 100%;
 }
 
 /* Три картинки: под наклоном и с наложением друг на друга, как в Figma */
@@ -717,6 +790,7 @@ onBeforeUnmount(() => {
 
 .hero__gallery-scale {
   width: 100%;
+  --hero-gallery-scale: 1;
 }
 
 .hero__photo {
@@ -736,32 +810,34 @@ onBeforeUnmount(() => {
   display: block;
 }
 
-/* Левая — Figma: 424.92×320.04 */
+/* Левая — Figma: 110.84×73.89, angle -9.86°, left 12px, top 453.73 */
 .hero__photo--left {
   align-self: flex-end;
-  aspect-ratio: 424.92 / 320.04;
-  width: clamp(336px, 35vw, 478px);
-  transform: translateY(-10px) rotate(-9.86deg);
-  z-index: 1;
-}
-
-/* Центр — Figma: 426.4×293.85 */
-.hero__photo--center {
-  align-self: flex-end;
-  aspect-ratio: 426.4 / 293.85;
-  width: clamp(356px, 37vw, 478px);
-  border-width: 2.6px;
-  transform: translateY(16px) rotate(-2.38deg);
+  aspect-ratio: 110.84 / 73.89;
+  width: clamp(380px, 40vw, 540px);
+  border-width: 2.36px;
+  transform: translateY(-10px) rotate(9.86deg);
   z-index: 2;
 }
 
-/* Правая — Figma: 492.12×387.25 */
+/* Центр — под первой и третьей */
+.hero__photo--center {
+  align-self: flex-end;
+  aspect-ratio: 119.08 / 79.39;
+  width: clamp(400px, 42vw, 540px);
+  border-width: 2.6px;
+  transform: translateY(16px) rotate(-2.38deg);
+  z-index: 1;
+}
+
+/* Правая — Figma: 124.56×83.02, angle 14.21°, left 219.88px, top 430.23 */
 .hero__photo--right {
   align-self: flex-end;
-  aspect-ratio: 492.12 / 387.25;
-  width: clamp(398px, 41vw, 556px);
-  transform: translateY(-10px) rotate(6deg);
-  z-index: 3;
+  aspect-ratio: 124.56 / 83.02;
+  width: clamp(450px, 46vw, 630px);
+  border-width: 2.6px;
+  transform: translateY(-10px) rotate(-14.21deg);
+  z-index: 2;
 }
 
 /* SECTIONS */
@@ -860,13 +936,12 @@ onBeforeUnmount(() => {
 
 .info-card__title {
   font-family: 'Cygre', sans-serif;
+  font-weight: 700;
   font-size: 31.81px;
   line-height: 1.58;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   margin: 0;
-  text-shadow: 0 0 1.27px #FFFFFF;
-  -webkit-text-stroke: 1.27px #ffffff;
   /* Figma: заголовок начинается внутри области иконки (x~28.6 при icon ~63.6) */
   margin-left: -36px;
   padding-top: 2px;
@@ -879,7 +954,7 @@ onBeforeUnmount(() => {
 }
 
 .info-card__text--azoft {
-  font-family: 'Azoft Sans', sans-serif;
+  font-family: 'Cygre', sans-serif;
 }
 
 /* SCHEDULE */
@@ -903,6 +978,7 @@ onBeforeUnmount(() => {
 
 .schedule-visual-scale {
   width: 100%;
+  --schedule-mobile-scale: 1;
 }
 
 .schedule-visual__inner {
@@ -1104,6 +1180,10 @@ onBeforeUnmount(() => {
   min-height: 120px;
 }
 
+.faq-item:last-child {
+  min-height: 160px;
+}
+
 .faq-item__inner {
   position: relative;
   width: 100%;
@@ -1206,6 +1286,7 @@ onBeforeUnmount(() => {
 
 .stats-layout-scale {
   width: 100%;
+  --stats-mobile-scale: 1;
 }
 
 .stats-col {
@@ -1450,6 +1531,7 @@ onBeforeUnmount(() => {
   max-width: none;
   padding-left: 0;
   padding-right: 0;
+  margin-bottom: 80px;
 }
 
 .section--partners .section__title {
@@ -1463,27 +1545,41 @@ onBeforeUnmount(() => {
 .partners-marquee {
   position: relative;
   overflow: hidden;
-  margin-top: 24px;
+  margin-top: 12px;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  padding: 6px 0;
+  padding: 4px 0;
 }
 
 .partners-marquee__track {
+  --partners-gap: 80px;
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: var(--partners-gap);
+  padding: 0 var(--partners-gap);
   animation: partners-scroll 22s linear infinite;
   width: max-content;
   will-change: transform;
 }
 
-.partners-strip {
-  display: block;
-  width: 100vw;
-  height: clamp(118px, 10vw, 189px);
+/* wrap — 100vw, без scale чтобы не наезжали */
+.partners-strip-wrap {
   flex: 0 0 100vw;
+  position: relative;
+  width: 100vw;
+  height: clamp(140px, 14vw, 280px);
+  overflow: hidden;
+}
+
+.partners-strip {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100vw;
+  height: auto;
+  min-height: 100%;
   object-fit: contain;
   object-position: center;
   box-sizing: border-box;
@@ -1495,7 +1591,7 @@ onBeforeUnmount(() => {
     transform: translateX(0);
   }
   100% {
-    transform: translateX(-100vw);
+    transform: translateX(calc(-100vw - var(--partners-gap)));
   }
 }
 
@@ -1697,15 +1793,16 @@ onBeforeUnmount(() => {
   }
   
   .hero__logo-caption {
-    white-space: normal;
+    white-space: nowrap;
   }
-  
+
   .hero__text {
-    margin-bottom: 60px;
+    max-width: min(1127px, 85vw);
+    margin: clamp(120px, 18vw, 200px) auto 60px;
+    padding: 0 24px;
   }
-  
+
   .hero__gallery-scale {
-    --hero-gallery-scale: clamp(0.44, calc((100vw - 48px) / 1200), 0.54);
     height: calc(500px * var(--hero-gallery-scale));
     display: flex;
     justify-content: center;
@@ -1717,11 +1814,11 @@ onBeforeUnmount(() => {
     flex-direction: row;
     align-items: flex-end;
     justify-content: center;
-    gap: -96px;
+    gap: 0;
     margin-bottom: 0;
     padding: 0;
     min-height: 500px;
-    width: 1200px;
+    width: 1360px;
     max-width: none;
     transform: scale(var(--hero-gallery-scale));
     transform-origin: top center;
@@ -1744,21 +1841,21 @@ onBeforeUnmount(() => {
   }
 
   .hero__photo--left {
-    width: 455px;
-    transform: translateY(-10px) rotate(-9.86deg);
-    z-index: 1;
-  }
-
-  .hero__photo--center {
-    width: 478px;
-    transform: translateY(16px) rotate(-2.38deg);
+    width: 525px;
+    transform: translateY(-10px) rotate(9.86deg);
     z-index: 2;
   }
 
+  .hero__photo--center {
+    width: 565px;
+    transform: translateY(16px) rotate(-2.38deg);
+    z-index: 1;
+  }
+
   .hero__photo--right {
-    width: 556px;
-    transform: translateY(-10px) rotate(6deg);
-    z-index: 3;
+    width: 590px;
+    transform: translateY(-10px) rotate(-14.21deg);
+    z-index: 2;
   }
 
   .schedule-visual-scale {
@@ -1791,9 +1888,10 @@ onBeforeUnmount(() => {
 
   /* ИТОГИ: сохраняем десктоп-композицию и просто уменьшаем целиком */
   .stats-layout-scale {
-    --stats-mobile-scale: clamp(0.52, calc((100vw - 48px) / 1128), 0.62);
+    width: 100%;
+    margin: 0;
     height: calc(463px * var(--stats-mobile-scale));
-    overflow: visible;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -1900,37 +1998,40 @@ onBeforeUnmount(() => {
   }
 
   .hero__character {
-    left: -260px;
+    left: -180px;
     right: auto;
-    top: 56px;
+    top: 20px;
     width: 360px;
     height: auto;
-    opacity: 0.92;
+    opacity: 0.95;
     transform: none;
   }
 
   .hero__bg {
-    right: -240px;
-    top: 280px;
+    right: -340px;
+    top: 20px;
     width: 520px;
     height: 520px;
   }
 
   .hero__logo-caption {
-    font-size: clamp(20px, 6.8vw, 36px);
-    letter-spacing: 0.04em;
-    margin: clamp(-86px, -12vw, -30px) auto clamp(52px, 8vw, 88px);
-    white-space: normal;
+    font-size: clamp(18px, 4.5vw, 40px);
+    letter-spacing: 0.02em;
+    margin: clamp(-110px, -14vw, -50px) 0 clamp(52px, 8vw, 88px);
+    white-space: nowrap;
   }
 
   .hero__text {
-    margin: 28px auto 36px;
+    max-width: min(100%, 520px);
+    margin: clamp(96px, 20vw, 180px) auto 36px;
+    padding: 0 8px;
     text-align: center;
   }
 
   .hero__title {
-    font-size: clamp(28px, 8.5vw, 42px);
+    font-size: clamp(18px, 5.2vw, 44px);
     margin-bottom: 8px;
+    white-space: nowrap;
   }
 
   .hero__subtitle {
@@ -1941,29 +2042,69 @@ onBeforeUnmount(() => {
 
   .hero__description {
     font-size: clamp(16px, 4.3vw, 20px);
-    line-height: 1.28;
+    line-height: 1.35;
     letter-spacing: 0.03em;
+    max-width: 100%;
     margin-left: auto;
     margin-right: auto;
   }
 
   .hero__gallery-scale {
-    --hero-gallery-scale: clamp(0.34, calc((100vw - 24px) / 1200), 0.44);
-    margin-bottom: 56px;
+    height: calc(500px * var(--hero-gallery-scale));
+    display: flex;
+    justify-content: center;
+    overflow: visible;
+    margin-bottom: 42px;
+    padding-bottom: calc(38px * var(--hero-gallery-scale));
   }
 
   .hero__gallery {
-    margin-left: clamp(14px, 4vw, 32px);
+    width: 1680px;
+    max-width: none;
+    min-height: 500px;
+    transform: scale(var(--hero-gallery-scale));
+    transform-origin: top center;
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    overflow: visible;
+  }
+
+  .hero__photo {
+    flex: 0 0 auto;
+  }
+
+  /* Figma: left 12px, center 122.47px, right 219.88px; top: left 453.73, center 437.54, right 430.23; border 0.68/0.74/0.74 */
+  .hero__photo--left {
+    width: 525px;
+    border-width: 2.2px;
+    transform: translate(-35px, 0) rotate(9.86deg);
+    z-index: 2;
+  }
+
+  .hero__photo--center {
+    width: 565px;
+    border-width: 2.6px;
+    transform: translate(-2px, -11px) rotate(-2.38deg);
+    z-index: 1;
+  }
+
+  .hero__photo--right {
+    width: 590px;
+    border-width: 2.6px;
+    transform: translate(25px, -14px) rotate(-14.21deg);
+    z-index: 2;
   }
 
   .info-card__head {
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
   }
 
   .info-card__title {
-    margin-left: 0;
+    margin-left: -56px;
+    transform: translateY(-4px);
     text-align: center;
   }
 
@@ -1984,6 +2125,10 @@ onBeforeUnmount(() => {
     margin-bottom: 112px;
   }
 
+  .section--info {
+    margin-top: -18px;
+  }
+
   .section__title {
     font-size: clamp(30px, 8vw, 44px);
     margin-bottom: 28px;
@@ -1993,35 +2138,72 @@ onBeforeUnmount(() => {
     padding: 0 16px;
   }
 
-  .partners-strip {
-    height: clamp(84px, 22vw, 120px);
-  }
-
   .schedule-visual-scale {
-    --schedule-mobile-scale: clamp(0.4, calc((100vw - 24px) / 1440), 0.5);
-    height: calc(493px * var(--schedule-mobile-scale));
-    overflow: visible;
+    height: calc(410px * var(--schedule-mobile-scale));
+    overflow: hidden;
     display: flex;
     justify-content: center;
-    padding-bottom: 10px;
+    align-items: flex-start;
+    padding-bottom: 6px;
   }
 
   .schedule-visual {
-    width: 1440px;
+    width: 980px;
     margin: 0;
-    overflow: visible;
     transform: scale(var(--schedule-mobile-scale));
     transform-origin: top center;
+    overflow: visible;
   }
 
   .schedule-visual__inner {
-    width: 1440px;
+    width: 980px;
     min-width: 0;
-    height: 493px;
+    height: 410px;
+  }
+
+  .schedule-visual__overlay {
+    width: 980px;
+    left: 0;
+    transform: none;
+    --schedule-shift-y: -22px;
+    --track-gap: 42px;
+  }
+
+  .schedule-step__circle--sm {
+    width: 64px;
+    height: 64px;
+    margin-left: -32px;
+    border-width: 8px;
+  }
+
+  .schedule-step__circle--lg {
+    width: 76px;
+    height: 76px;
+    margin-left: -38px;
+  }
+
+  .schedule-step__trophy {
+    width: 76px;
+    height: 76px;
+  }
+
+  .schedule-step__date {
+    font-size: 30px;
+    width: 58px;
+    margin-left: -29px;
+  }
+
+  .schedule-step__label {
+    font-size: 17px;
+    line-height: 1.2;
   }
 
   .faq-item {
     min-height: 148px;
+  }
+
+  .faq-item:last-child {
+    min-height: 200px;
   }
 
   .faq-item__face {
@@ -2051,7 +2233,6 @@ onBeforeUnmount(() => {
   }
 
   .stats-layout-scale {
-    --stats-mobile-scale: clamp(0.36, calc((100vw - 24px) / 1128), 0.48);
     padding-bottom: 10px;
   }
 
@@ -2065,8 +2246,8 @@ onBeforeUnmount(() => {
 
   .cta-layout__images {
     width: min(320px, 100%);
-    max-width: 320px;
-    height: 260px;
+    max-width: 290px;
+    height: 228px;
     margin: 0 auto;
   }
 
@@ -2077,6 +2258,10 @@ onBeforeUnmount(() => {
 
   .cta__actions {
     justify-content: center;
+  }
+
+  .partners-marquee__track {
+    animation-duration: 28s;
   }
 
   .fcl-footer {
@@ -2090,17 +2275,23 @@ onBeforeUnmount(() => {
     font-size: 12px;
   }
 
+  .info-card__title {
+    margin-left: -50px;
+    transform: translateY(-5px);
+  }
+
   .hero__character {
-    left: -286px;
-    top: 42px;
+    left: -200px;
+    top: 16px;
   }
 
   .hero__bg {
-    right: -272px;
+    right: -372px;
+    top: 0;
   }
 
   .hero__logo-caption {
-    margin: -50px auto 48px;
+    margin: -70px 0 48px;
   }
 
   .hero__gallery {
@@ -2108,9 +2299,11 @@ onBeforeUnmount(() => {
   }
 
   .hero__gallery-scale {
-    --hero-gallery-scale: clamp(0.3, calc((100vw - 20px) / 1200), 0.38);
-    height: calc(500px * var(--hero-gallery-scale));
-    margin-bottom: 42px;
+    margin-bottom: 34px;
+  }
+
+  .section--info {
+    margin-top: -12px;
   }
 
   .section {
@@ -2121,14 +2314,11 @@ onBeforeUnmount(() => {
     font-size: clamp(28px, 7.2vw, 34px);
   }
 
-  .schedule-visual-scale {
-    --schedule-mobile-scale: clamp(0.34, calc((100vw - 20px) / 1440), 0.42);
-    height: calc(493px * var(--schedule-mobile-scale));
-    padding-bottom: 12px;
+  .schedule-step__label {
+    font-size: 15px;
   }
 
   .stats-layout-scale {
-    --stats-mobile-scale: clamp(0.3, calc((100vw - 20px) / 1128), 0.4);
     padding-bottom: 12px;
   }
 }

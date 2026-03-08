@@ -45,7 +45,7 @@ services:
   landing:
     image: fcl-landing:latest
     build:
-      context: ./fkl_land
+      context: ./fcl_lend
 
   nginx:
     image: nginx:alpine

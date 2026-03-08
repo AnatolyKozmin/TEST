@@ -30,6 +30,18 @@ docker compose up --build
 - Frontend: `http://localhost:5173`
 - Backend health: `http://localhost:8000/api/health`
 
+### Локальный запуск лендинга для тестов
+
+Лендинг можно поднять отдельно в dev-режиме (с hot reload) через профиль `landing`:
+
+```
+docker compose --profile landing up landing
+```
+
+После запуска лендинг будет доступен по адресу:
+
+- `http://127.0.0.1:5174`
+
 ### Запуск на сервере (самый простой прод)
 
 Если у тебя **домен + SSL уже есть** и текущий nginx на сервере не нужен — проще всего поднять nginx **вместе с проектом**.
