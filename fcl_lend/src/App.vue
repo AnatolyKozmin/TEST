@@ -464,12 +464,18 @@ onBeforeUnmount(() => {
         <h2 class="section__title">НАМ ДОВЕРЯЮТ</h2>
           <div class="partners-marquee">
           <div class="partners-marquee__track">
-            <div class="partners-strip-wrap"><img :src="partnersStrip" alt="Партнёры" class="partners-strip" /></div>
-            <div class="partners-strip-wrap partners-strip-wrap--tach"><img src="/tach-logo-white.svg" alt="Tach" class="partners-strip partners-strip--tach" /></div>
-            <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
-            <div class="partners-strip-wrap partners-strip-wrap--tach"><img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip partners-strip--tach" /></div>
-            <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
-            <div class="partners-strip-wrap partners-strip-wrap--tach"><img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip partners-strip--tach" /></div>
+            <div class="partners-strip-wrap">
+              <img :src="partnersStrip" alt="Партнёры" class="partners-strip" />
+              <img src="/tach-logo-white.svg" alt="Tach" class="partners-strip__tach" />
+            </div>
+            <div class="partners-strip-wrap">
+              <img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" />
+              <img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip__tach" />
+            </div>
+            <div class="partners-strip-wrap">
+              <img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" />
+              <img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip__tach" />
+            </div>
           </div>
         </div>
       </section>
@@ -1566,27 +1572,35 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
-/* wrap — 100vw, без scale чтобы не наезжали */
+/* wrap — strip + tach в одной линии */
 .partners-strip-wrap {
   flex: 0 0 100vw;
-  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
   width: 100vw;
   height: clamp(140px, 14vw, 280px);
   overflow: hidden;
+  padding: 0 clamp(10px, 2vw, 24px);
+  box-sizing: border-box;
 }
 
 .partners-strip {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 100vw;
-  height: auto;
-  min-height: 100%;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
   object-fit: contain;
-  object-position: center;
-  box-sizing: border-box;
-  padding: 0 clamp(10px, 2vw, 24px);
+  object-position: left center;
+  display: block;
+}
+
+.partners-strip__tach {
+  flex: 0 0 auto;
+  width: clamp(100px, 12vw, 160px);
+  height: clamp(48px, 6vw, 80px);
+  object-fit: contain;
+  display: block;
 }
 
 @keyframes partners-scroll {
@@ -1596,21 +1610,6 @@ onBeforeUnmount(() => {
   100% {
     transform: translateX(calc(-100vw - var(--partners-gap)));
   }
-}
-
-.partners-strip-wrap--tach {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.partners-strip--tach {
-  position: static;
-  transform: none;
-  width: auto;
-  height: clamp(48px, 6vw, 80px);
-  min-height: 0;
-  padding: 0;
 }
 
 /* CONTACTS */
