@@ -2,7 +2,6 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import partnersStrip from '@/assets/partners-strip.svg'
-import tachLogo from '@/assets/tach-logo-white.svg'
 import contactOleg from '@/assets/contact-oleg.png'
 import contactPlaton from '@/assets/contact-platon.png'
 import contactAlina from '@/assets/contact-alina.png'
@@ -471,7 +470,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <div class="partners-sponsors">
-          <img :src="tachLogo" alt="Tach" class="partners-sponsors__logo" />
+          <img src="/tach-logo-white.svg" alt="Tach" class="partners-sponsors__logo" />
         </div>
       </section>
 
