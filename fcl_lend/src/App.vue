@@ -1607,13 +1607,16 @@ onBeforeUnmount(() => {
   gap: 48px;
   margin-top: 32px;
   padding: 0 24px;
+  min-height: 80px;
 }
 
 .partners-sponsors__logo {
-  height: clamp(40px, 5vw, 64px);
+  height: clamp(48px, 6vw, 80px);
   width: auto;
+  min-width: 120px;
   object-fit: contain;
-  opacity: 0.9;
+  opacity: 1;
+  filter: brightness(1);
 }
 
 /* CONTACTS */
