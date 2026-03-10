@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import partnersStrip from '@/assets/partners-strip.svg'
+import tachLogo from '@/assets/tach-logo-white.svg'
 import contactOleg from '@/assets/contact-oleg.png'
 import contactPlaton from '@/assets/contact-platon.png'
 import contactAlina from '@/assets/contact-alina.png'
@@ -468,6 +469,9 @@ onBeforeUnmount(() => {
             <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
             <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
           </div>
+        </div>
+        <div class="partners-sponsors">
+          <img :src="tachLogo" alt="Tach" class="partners-sponsors__logo" />
         </div>
       </section>
 
@@ -1593,6 +1597,23 @@ onBeforeUnmount(() => {
   100% {
     transform: translateX(calc(-100vw - var(--partners-gap)));
   }
+}
+
+.partners-sponsors {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 48px;
+  margin-top: 32px;
+  padding: 0 24px;
+}
+
+.partners-sponsors__logo {
+  height: clamp(40px, 5vw, 64px);
+  width: auto;
+  object-fit: contain;
+  opacity: 0.9;
 }
 
 /* CONTACTS */
