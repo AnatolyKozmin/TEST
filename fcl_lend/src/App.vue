@@ -1597,8 +1597,8 @@ onBeforeUnmount(() => {
 
 .partners-strip__tach {
   flex: 0 0 auto;
-  width: clamp(100px, 12vw, 160px);
-  height: clamp(48px, 6vw, 80px);
+  width: clamp(70px, 8vw, 110px);
+  height: clamp(32px, 4vw, 52px);
   object-fit: contain;
   display: block;
 }
