@@ -465,12 +465,12 @@ onBeforeUnmount(() => {
           <div class="partners-marquee">
           <div class="partners-marquee__track">
             <div class="partners-strip-wrap"><img :src="partnersStrip" alt="Партнёры" class="partners-strip" /></div>
+            <div class="partners-strip-wrap partners-strip-wrap--tach"><img src="/tach-logo-white.svg" alt="Tach" class="partners-strip partners-strip--tach" /></div>
             <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
+            <div class="partners-strip-wrap partners-strip-wrap--tach"><img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip partners-strip--tach" /></div>
             <div class="partners-strip-wrap"><img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" /></div>
+            <div class="partners-strip-wrap partners-strip-wrap--tach"><img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip partners-strip--tach" /></div>
           </div>
-        </div>
-        <div class="partners-sponsors">
-          <img src="/tach-logo-white.svg" alt="Tach" class="partners-sponsors__logo" />
         </div>
       </section>
 
@@ -1598,24 +1598,19 @@ onBeforeUnmount(() => {
   }
 }
 
-.partners-sponsors {
+.partners-strip-wrap--tach {
   display: flex;
-  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 48px;
-  margin-top: 32px;
-  padding: 0 24px;
-  min-height: 80px;
 }
 
-.partners-sponsors__logo {
-  height: clamp(48px, 6vw, 80px);
+.partners-strip--tach {
+  position: static;
+  transform: none;
   width: auto;
-  min-width: 120px;
-  object-fit: contain;
-  opacity: 1;
-  filter: brightness(1);
+  height: clamp(48px, 6vw, 80px);
+  min-height: 0;
+  padding: 0;
 }
 
 /* CONTACTS */
