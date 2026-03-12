@@ -285,7 +285,7 @@ onBeforeUnmount(() => {
               <img class="info-card__icon" src="@/assets/info-icon-participants.svg" alt="" aria-hidden="true" />
               <h3 class="info-card__title">УЧАСТНИКИ</h3>
             </div>
-            <p class="info-card__text info-card__text--azoft">Студенты москвы, которые хотят улучшить навыки и попробовать свои силы в чём-то новом.</p>
+            <p class="info-card__text info-card__text--azoft">Студенты Москвы, которые хотят улучшить навыки и попробовать свои силы в чём-то новом.</p>
           </article>
 
           <article class="info-card">
