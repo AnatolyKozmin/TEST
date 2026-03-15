@@ -332,7 +332,7 @@ onBeforeUnmount(() => {
                   <span class="schedule-step__dot" aria-hidden="true"></span>
                 </div>
                 <div class="schedule-step__vline" aria-hidden="true"></div>
-                <div class="schedule-step__date">22.03</div>
+                <div class="schedule-step__date">15.03</div>
                 <div class="schedule-step__label">Начало онлайн-этапа</div>
               </div>
 
@@ -341,7 +341,7 @@ onBeforeUnmount(() => {
                   <span class="schedule-step__dot" aria-hidden="true"></span>
                 </div>
                 <div class="schedule-step__vline" aria-hidden="true"></div>
-                <div class="schedule-step__date">15.03</div>
+                <div class="schedule-step__date">22.03</div>
                 <div class="schedule-step__label">Начало регистрации зрителей</div>
               </div>
 
@@ -683,7 +683,7 @@ onBeforeUnmount(() => {
 .hero__bg {
   position: absolute;
   top: 40px;
-  right: -420px;
+  right: -500px;
   width: 754px;
   height: 733px;
   z-index: 1;
@@ -699,7 +699,7 @@ onBeforeUnmount(() => {
 .hero__character {
   position: absolute;
   top: 29px;
-  left: -440px;
+  left: -520px;
   width: 521px;
   height: 554px;
   z-index: 1;
@@ -1129,8 +1129,8 @@ onBeforeUnmount(() => {
 }
 
 .schedule-step__date {
-  /* Чуть ниже, чтобы вертикальная линия не упиралась в текст */
-  top: calc(clamp(282px, 24vw, 341px) + var(--schedule-shift-y));
+  /* Ниже, чтобы не перекрывались полосками и вертикальной линией */
+  top: calc(clamp(310px, 26vw, 375px) + var(--schedule-shift-y));
   width: 69px;
   margin-left: -34.5px;
   height: 42px;
@@ -1149,7 +1149,7 @@ onBeforeUnmount(() => {
 }
 
 .schedule-step__label {
-  top: calc(clamp(344px, 28vw, 408px) + var(--schedule-shift-y));
+  top: calc(clamp(372px, 30vw, 442px) + var(--schedule-shift-y));
   width: var(--label-w);
   margin-left: calc(var(--label-w) / -2);
   min-height: 25px;
@@ -1166,7 +1166,7 @@ onBeforeUnmount(() => {
 }
 
 .schedule-step__label--center {
-  top: calc(clamp(356px, 29vw, 420px) + var(--schedule-shift-y));
+  top: calc(clamp(384px, 31vw, 454px) + var(--schedule-shift-y));
 }
 
 .section--faq .section__title {
@@ -2015,7 +2015,7 @@ onBeforeUnmount(() => {
   }
 
   .hero__character {
-    left: -180px;
+    left: -220px;
     right: auto;
     top: 20px;
     width: 360px;
@@ -2025,7 +2025,7 @@ onBeforeUnmount(() => {
   }
 
   .hero__bg {
-    right: -340px;
+    right: -400px;
     top: 20px;
     width: 520px;
     height: 520px;
@@ -2298,12 +2298,12 @@ onBeforeUnmount(() => {
   }
 
   .hero__character {
-    left: -200px;
+    left: -240px;
     top: 16px;
   }
 
   .hero__bg {
-    right: -372px;
+    right: -432px;
     top: 0;
   }
 
