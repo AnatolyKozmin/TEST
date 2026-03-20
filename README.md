@@ -76,6 +76,12 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 Если на сервере уже заняты 80/443 — сначала останови старые контейнеры nginx, чтобы освободить порты.
 
+### Бот «молчит» / не отвечает на `/start`
+
+1. **Логи контейнера:** `docker compose logs -f bot` (или `docker compose -f docker-compose.prod.yml logs -f bot`). Должна быть строка `Polling started; webapp ...`. Ошибки `Unauthorized` — неверный `BOT_TOKEN`; `Conflict` — второй процесс с тем же токеном (другой сервер или локальный запуск).
+2. **Webhook:** если раньше включали webhook, polling не получает апдейты. В коде бота перед стартом вызывается `delete_webhook`; пересоберите образ и перезапустите бота.
+3. **`bot/.env`:** обязательны `BOT_TOKEN` и корректный `WEBAPP_URL` (HTTPS для прод). Без валидного токена контейнер может сразу падать при старте.
+
 ### Важно про Telegram WebApp
 
 API требует заголовок `X-Telegram-Init-Data` (Telegram автоматически передаёт его в mini app).

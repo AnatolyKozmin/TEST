@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import sys
 
 import httpx
 from aiogram import Bot, Dispatcher, F
@@ -8,6 +10,12 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from bot_config import settings
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    stream=sys.stdout,
+)
+log = logging.getLogger(__name__)
 
 dp = Dispatcher()
 
@@ -103,6 +111,13 @@ async def fallback(message: Message):
 
 async def main():
     bot = Bot(settings.bot_token)
+    # Если у бота был включён webhook (другой сервис, BotFather, тесты), polling не получает апдейты
+    await bot.delete_webhook(drop_pending_updates=False)
+    log.info(
+        "Polling started; webapp participants=%s guests=%s",
+        settings.webapp_url,
+        settings.guest_webapp_url,
+    )
     await dp.start_polling(bot)
 
 
