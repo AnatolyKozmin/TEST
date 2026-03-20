@@ -1,9 +1,11 @@
 import { getTelegramInitData } from './telegram'
 
-export type Discipline = 'CS2' | 'DOTA2' | 'FC26'
+export type Discipline = 'CS2' | 'DOTA2' | 'FC26' | 'GUEST'
 export type RegistrationMode = 'team' | 'individual'
+export type RegistrationKind = 'participant' | 'guest'
 
 export type DraftPayload = {
+  registration_kind?: RegistrationKind
   discipline: Discipline | null
   mode: RegistrationMode | null
   data: Record<string, unknown>

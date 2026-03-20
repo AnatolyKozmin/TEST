@@ -114,6 +114,7 @@ onMounted(() => {
         <option value="CS2">CS2</option>
         <option value="DOTA2">Dota 2</option>
         <option value="FC26">FC26</option>
+        <option value="GUEST">Зрители (GUEST)</option>
       </select>
 
       <select v-model="mode">

@@ -54,6 +54,21 @@ def _safe(v: Any) -> str:
 
 
 def _build_submission_message(payload: DraftPayload) -> str:
+    if payload.discipline == Discipline.GUEST:
+        data = payload.data or {}
+        fac = _safe(data.get("faculty"))
+        if fac == "Другое":
+            fac = _safe(data.get("faculty_other")) or fac
+        return "\n".join(
+            [
+                "Регистрация зрителя успешно отправлена!",
+                "",
+                f"ФИО: {_safe(data.get('full_name'))}",
+                f"Telegram: {_safe(data.get('telegram'))}",
+                f"Факультет: {fac}",
+            ]
+        )
+
     lines = [
         "Заявка успешно отправлена!",
         "",
@@ -119,16 +134,29 @@ async def get_draft(user: TelegramWebAppUser = Depends(get_tg_user)):
 
 @app.put("/api/draft", status_code=204)
 async def put_draft(draft: DraftPayload, user: TelegramWebAppUser = Depends(get_tg_user)):
-    # Normalize: FC26 only individual; CS2/DOTA2 only team.
     discipline = draft.discipline
     mode = draft.mode
+    kind = draft.registration_kind
 
-    if discipline == Discipline.FC26:
-        mode = RegistrationMode.individual
-    if discipline in (Discipline.CS2, Discipline.DOTA2):
-        mode = RegistrationMode.team
+    if kind == "guest" or discipline == Discipline.GUEST:
+        normalized = DraftPayload(
+            registration_kind="guest",
+            discipline=Discipline.GUEST,
+            mode=RegistrationMode.individual,
+            data=draft.data or {},
+        )
+    else:
+        if discipline == Discipline.FC26:
+            mode = RegistrationMode.individual
+        if discipline in (Discipline.CS2, Discipline.DOTA2):
+            mode = RegistrationMode.team
+        normalized = DraftPayload(
+            registration_kind="participant",
+            discipline=discipline,
+            mode=mode,
+            data=draft.data or {},
+        )
 
-    normalized = DraftPayload(discipline=discipline, mode=mode, data=draft.data or {})
     await redis.set(_draft_key(user.id), normalized.model_dump_json(), ex=settings.draft_ttl_seconds)
     return Response(status_code=204)
 
@@ -143,13 +171,31 @@ async def submit(
     if not draft.discipline or not draft.mode:
         raise HTTPException(status_code=422, detail="discipline and mode are required")
 
-    if draft.discipline == Discipline.FC26 and draft.mode != RegistrationMode.individual:
-        raise HTTPException(status_code=422, detail="FC26 требует индивидуальную регистрацию")
+    if draft.discipline == Discipline.GUEST:
+        if draft.mode != RegistrationMode.individual:
+            raise HTTPException(status_code=422, detail="GUEST требует индивидуальный тип")
+        data = draft.data or {}
+        for field in ("full_name", "telegram", "faculty"):
+            v = data.get(field)
+            if not v or not str(v).strip():
+                raise HTTPException(status_code=422, detail=f"Поле {field} обязательно")
+        if str(data.get("faculty", "")).strip() == "Другое":
+            other = data.get("faculty_other")
+            if not other or not str(other).strip():
+                raise HTTPException(status_code=422, detail="Укажите факультет (поле «Другое»)")
+    else:
+        if draft.discipline == Discipline.FC26 and draft.mode != RegistrationMode.individual:
+            raise HTTPException(status_code=422, detail="FC26 требует индивидуальную регистрацию")
 
-    if draft.discipline in (Discipline.CS2, Discipline.DOTA2) and draft.mode != RegistrationMode.team:
-        raise HTTPException(status_code=422, detail="Для CS2 и Dota2 доступна только командная регистрация")
+        if draft.discipline in (Discipline.CS2, Discipline.DOTA2) and draft.mode != RegistrationMode.team:
+            raise HTTPException(status_code=422, detail="Для CS2 и Dota2 доступна только командная регистрация")
 
-    payload = DraftPayload(discipline=draft.discipline, mode=draft.mode, data=draft.data or {}).model_dump()
+    payload = DraftPayload(
+        registration_kind=draft.registration_kind,
+        discipline=draft.discipline,
+        mode=draft.mode,
+        data=draft.data or {},
+    ).model_dump()
 
     async with SessionLocal() as session:
         await session.execute(
@@ -341,6 +387,27 @@ def _build_excel_export(rows: list) -> bytes:
                         ])
                     else:
                         row.append(_safe_str(p.get("full_name")) + " | " + _safe_str(p.get("game_nick")))
+                ws.append(row)
+        elif regs and getattr(regs[0], "discipline", None) == "GUEST":
+            headers = ["ID", "TG User ID", "TG Username", "Дата заявки", "ФИО", "Telegram", "Факультет"]
+            ws.append(headers)
+            for r in regs:
+                data = r.payload or {}
+                inner = data.get("data", data)
+                if not isinstance(inner, dict):
+                    inner = {}
+                fac = _safe_str(inner.get("faculty"))
+                if fac == "Другое":
+                    fac = _safe_str(inner.get("faculty_other")) or fac
+                row = [
+                    r.id,
+                    r.tg_user_id,
+                    _safe_str(r.tg_username),
+                    (r.submitted_at.isoformat()[:19] if r.submitted_at else ""),
+                    _safe_str(inner.get("full_name")),
+                    _safe_str(inner.get("telegram")),
+                    fac,
+                ]
                 ws.append(row)
         else:
             headers = ["ID", "TG User ID", "TG Username", "Дата заявки", "ФИО", "Ник", "Telegram"]

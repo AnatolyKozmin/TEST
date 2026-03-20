@@ -43,10 +43,15 @@ type TeamPlayer = {
 }
 
 const draft = reactive<DraftPayload>({
+  registration_kind: 'participant',
   discipline: null,
   mode: null,
   data: {},
 })
+
+const activeTab = ref<'participant' | 'guest'>('participant')
+
+const isGuestTab = computed(() => activeTab.value === 'guest')
 
 const isTeamAllowed = computed(() => draft.discipline === 'CS2' || draft.discipline === 'DOTA2')
 const resolvedMode = computed<RegistrationMode | null>(() => {
@@ -55,7 +60,36 @@ const resolvedMode = computed<RegistrationMode | null>(() => {
   return draft.mode
 })
 
+function ensureGuestDraft() {
+  draft.registration_kind = 'guest'
+  draft.discipline = 'GUEST'
+  draft.mode = 'individual'
+  if (!draft.data.full_name) draft.data['full_name'] = ''
+  if (!draft.data.telegram) draft.data['telegram'] = ''
+  if (!draft.data.faculty) draft.data['faculty'] = ''
+  if (!draft.data.faculty_other) draft.data['faculty_other'] = ''
+}
+
+function ensureParticipantDraft() {
+  draft.registration_kind = 'participant'
+  if (draft.discipline === 'GUEST') {
+    draft.discipline = null
+    draft.mode = null
+    draft.data = {}
+  }
+}
+
+function setTab(tab: 'participant' | 'guest') {
+  activeTab.value = tab
+  if (tab === 'guest') {
+    ensureGuestDraft()
+  } else {
+    ensureParticipantDraft()
+  }
+}
+
 function ensureDefaults() {
+  if (draft.discipline === 'GUEST') return
   if (draft.discipline === 'FC26') draft.mode = 'individual'
   if (isTeamAllowed.value) {
     draft.mode = 'team'
@@ -118,6 +152,16 @@ function isFilled(v: unknown): boolean {
 }
 
 function validateBeforeSubmit(): string | null {
+  if (draft.discipline === 'GUEST' || draft.registration_kind === 'guest') {
+    if (!isFilled(draft.data['full_name'])) return 'Заполните ФИО'
+    if (!isFilled(draft.data['telegram'])) return 'Заполните Telegram'
+    if (!isFilled(draft.data['faculty'])) return 'Выберите факультет'
+    if (draft.data['faculty'] === 'Другое' && !isFilled(draft.data['faculty_other'])) {
+      return 'Заполните свой факультет'
+    }
+    return null
+  }
+
   if (!draft.discipline || !resolvedMode.value) return 'Выберите дисциплину и тип регистрации'
 
   if (resolvedMode.value === 'team') {
@@ -176,10 +220,17 @@ onMounted(async () => {
   try {
     const loaded = await loadDraft()
     if (loaded) {
+      draft.registration_kind = loaded.registration_kind ?? 'participant'
       draft.discipline = loaded.discipline
       draft.mode = loaded.mode
       draft.data = loaded.data || {}
-      ensureDefaults()
+      if (loaded.discipline === 'GUEST' || loaded.registration_kind === 'guest') {
+        activeTab.value = 'guest'
+        ensureGuestDraft()
+      } else {
+        activeTab.value = 'participant'
+        ensureDefaults()
+      }
       savingState.value = 'saved'
     }
   } catch {
@@ -189,14 +240,26 @@ onMounted(async () => {
 
 let saveTimer: number | null = null
 watch(
-  () => ({ discipline: draft.discipline, mode: draft.mode, data: draft.data }),
+  () => ({
+    registration_kind: draft.registration_kind,
+    discipline: draft.discipline,
+    mode: draft.mode,
+    data: draft.data,
+  }),
   () => {
     if (saveTimer) window.clearTimeout(saveTimer)
     saveTimer = window.setTimeout(async () => {
       savingState.value = 'saving'
       lastError.value = null
       try {
-        await saveDraft({ discipline: draft.discipline, mode: resolvedMode.value, data: draft.data })
+        const mode =
+          draft.discipline === 'GUEST' ? 'individual' : resolvedMode.value
+        await saveDraft({
+          registration_kind: draft.registration_kind,
+          discipline: draft.discipline,
+          mode,
+          data: draft.data,
+        })
         savingState.value = 'saved'
       } catch (e) {
         if (e instanceof MissingTelegramInitDataError) {
@@ -212,6 +275,9 @@ watch(
 )
 
 async function submit() {
+  if (activeTab.value === 'guest') {
+    ensureGuestDraft()
+  }
   const validationError = validateBeforeSubmit()
   if (validationError) {
     savingState.value = 'error'
@@ -222,7 +288,12 @@ async function submit() {
   savingState.value = 'saving'
   lastError.value = null
   try {
-    await submitRegistration({ discipline: draft.discipline, mode: resolvedMode.value, data: draft.data })
+    await submitRegistration({
+      registration_kind: draft.registration_kind,
+      discipline: draft.discipline,
+      mode: draft.discipline === 'GUEST' ? 'individual' : resolvedMode.value,
+      data: draft.data,
+    })
     savingState.value = 'saved'
     router.push('/')
   } catch (e) {
@@ -242,7 +313,73 @@ async function submit() {
     <img class="landing-bg-image" :src="bgImageUrl" alt="" aria-hidden="true" />
     <AppTopbar title="Регистрация" showBack @back="router.back()" />
 
-    <div class="card">
+    <div class="register-tabs" role="tablist">
+      <button
+        type="button"
+        class="register-tab"
+        :class="{ active: activeTab === 'participant' }"
+        role="tab"
+        :aria-selected="activeTab === 'participant'"
+        @click="setTab('participant')"
+      >
+        1. Участники
+      </button>
+      <button
+        type="button"
+        class="register-tab"
+        :class="{ active: activeTab === 'guest' }"
+        role="tab"
+        :aria-selected="activeTab === 'guest'"
+        @click="setTab('guest')"
+      >
+        2. Зрители
+      </button>
+    </div>
+
+    <div class="card" v-if="isGuestTab">
+      <p class="guest-intro">Регистрация зрителя на мероприятие</p>
+      <div class="field">
+        <div class="label">ФИО</div>
+        <input
+          :value="(draft.data['full_name'] as string | undefined) ?? ''"
+          required
+          @input="draft.data['full_name'] = ($event.target as HTMLInputElement).value"
+        />
+      </div>
+
+      <div class="field">
+        <div class="label">Telegram</div>
+        <input
+          :value="(draft.data['telegram'] as string | undefined) ?? ''"
+          placeholder="@username"
+          required
+          @input="draft.data['telegram'] = ($event.target as HTMLInputElement).value"
+        />
+      </div>
+
+      <div class="field">
+        <div class="label">Факультет</div>
+        <select
+          :value="(draft.data['faculty'] as string | undefined) ?? ''"
+          required
+          @change="draft.data['faculty'] = ($event.target as HTMLSelectElement).value"
+        >
+          <option value="" disabled>Выберите факультет</option>
+          <option v-for="f in faculties" :key="f" :value="f">{{ f }}</option>
+        </select>
+      </div>
+
+      <div class="field" v-if="draft.data['faculty'] === 'Другое'">
+        <div class="label">Свой факультет</div>
+        <input
+          :value="(draft.data['faculty_other'] as string | undefined) ?? ''"
+          required
+          @input="draft.data['faculty_other'] = ($event.target as HTMLInputElement).value"
+        />
+      </div>
+    </div>
+
+    <div class="card" v-if="!isGuestTab">
       <div class="field">
         <div class="label">Дисциплина</div>
         <select v-model="draft.discipline" @change="setDiscipline(draft.discipline as Discipline)">
@@ -264,7 +401,7 @@ async function submit() {
       </div>
     </div>
 
-    <div class="card" v-if="resolvedMode === 'team'">
+    <div class="card" v-if="!isGuestTab && resolvedMode === 'team'">
       <div class="hint" style="margin-bottom: 14px">
         Состав команды: 5 основных игроков + 3 запасных. Для запасных поля необязательные.
       </div>
@@ -324,7 +461,7 @@ async function submit() {
       </div>
     </div>
 
-    <div class="card" v-if="resolvedMode === 'individual'">
+    <div class="card" v-if="!isGuestTab && resolvedMode === 'individual'">
       <div class="field">
         <div class="label">ФИО</div>
         <input
@@ -395,10 +532,46 @@ async function submit() {
       </div>
     </div>
 
-    <div class="bottom-cta" v-if="draft.discipline && resolvedMode">
+    <div class="bottom-cta" v-if="isGuestTab || (draft.discipline && resolvedMode)">
       <div class="status" v-if="statusText">{{ statusText }}</div>
       <button class="primary-button" type="button" @click="submit">Отправить заявку</button>
     </div>
   </div>
 </template>
+
+<style scoped>
+.register-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.register-tab {
+  flex: 1;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.register-tab.active {
+  background: rgba(151, 125, 255, 0.35);
+  border-color: rgba(151, 125, 255, 0.55);
+  color: #fff;
+}
+
+.guest-intro {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.75);
+}
+</style>
 
