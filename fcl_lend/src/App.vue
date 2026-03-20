@@ -472,19 +472,23 @@ onBeforeUnmount(() => {
               :aria-label="n === 1 ? 'Партнёры турнира' : undefined"
               :aria-hidden="n === 1 ? undefined : 'true'"
             >
-              <img
-                :src="partnersStrip"
-                :alt="n === 1 ? 'Партнёры' : ''"
-                :aria-hidden="n === 1 ? undefined : 'true'"
-                class="partners-strip"
-                draggable="false"
-              />
-              <img
-                src="/tach-logo-white.svg"
-                alt="Tach"
-                class="partners-strip__tach"
-                :aria-hidden="n === 1 ? undefined : 'true'"
-              />
+              <div class="partners-strip__main">
+                <img
+                  :src="partnersStrip"
+                  :alt="n === 1 ? 'Партнёры' : ''"
+                  :aria-hidden="n === 1 ? undefined : 'true'"
+                  class="partners-strip"
+                  draggable="false"
+                />
+              </div>
+              <div class="partners-strip__tach-wrap">
+                <img
+                  src="/tach-logo-white.svg"
+                  alt="Tach"
+                  class="partners-strip__tach"
+                  :aria-hidden="n === 1 ? undefined : 'true'"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1603,36 +1607,54 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
-/* Одна полоса SVG + Tach — как в макете, без кадрирования по слотам (иначе логотипы наезжают) */
+/*
+ * Партнёры: общая «высота строки» — полоса и Tach вписываются в одинаковый по высоте бокс (object-fit),
+ * иначе у широкой полосы при узком месте высота проседала, а Tach оставался крупным.
+ */
 .partners-strip-wrap {
+  --partners-logo-h: clamp(40px, 6vw, 80px);
   flex: 0 0 100vw;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: clamp(12px, 2vw, 24px);
+  gap: clamp(12px, 2vw, 32px);
   width: 100vw;
-  height: clamp(140px, 14vw, 280px);
+  height: calc(var(--partners-logo-h) + 28px);
   overflow: hidden;
   padding: 0 clamp(10px, 2vw, 24px);
   box-sizing: border-box;
 }
 
-.partners-strip {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  width: 100%;
-  object-fit: contain;
-  object-position: center center;
-  display: block;
+.partners-strip__main,
+.partners-strip__tach-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--partners-logo-h);
+  min-height: 0;
 }
 
-.partners-strip__tach {
+/* Основная полоса — остаток ширины */
+.partners-strip__main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Слот под Tach: ширина от той же базовой высоты, что и у полосы (пропорции ~512×162) */
+.partners-strip__tach-wrap {
   flex: 0 0 auto;
-  width: clamp(70px, 8vw, 110px);
-  height: clamp(32px, 4vw, 52px);
-  object-fit: contain;
+  width: min(260px, max(140px, calc(var(--partners-logo-h) * 3.15)));
+}
+
+.partners-strip,
+.partners-strip__tach {
   display: block;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  object-position: center center;
 }
 
 @keyframes partners-scroll {
