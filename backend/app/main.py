@@ -353,7 +353,7 @@ def _build_excel_export(rows: list) -> bytes:
 
         if regs and regs[0].mode == "team":
             headers = [
-                "ID", "TG User ID", "TG Username", "Дата заявки",
+                "ID", "TG User ID", "TG Username", "Дата заявки", "Название команды",
                 "Игрок 1 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
                 "Игрок 2 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
                 "Игрок 3 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
@@ -365,14 +365,18 @@ def _build_excel_export(rows: list) -> bytes:
             for r in regs:
                 data = r.payload or {}
                 inner = data.get("data", data)
-                players = (inner.get("team_players") if isinstance(inner, dict) else []) or []
+                if not isinstance(inner, dict):
+                    inner = {}
+                players = inner.get("team_players") or []
                 if not isinstance(players, list):
                     players = []
+                team_name = _safe_str(inner.get("team_name"))
                 row = [
                     r.id,
                     r.tg_user_id,
                     _safe_str(r.tg_username),
                     (r.submitted_at.isoformat()[:19] if r.submitted_at else ""),
+                    team_name,
                 ]
                 for i in range(8):
                     p = players[i] if i < len(players) and isinstance(players[i], dict) else {}
