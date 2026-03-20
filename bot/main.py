@@ -65,14 +65,16 @@ def _render_stats(data: dict) -> str:
 @dp.message(CommandStart())
 async def start(message: Message):
     kb = InlineKeyboardBuilder()
-    kb.button(text="Открыть мини‑апп", web_app={"url": settings.webapp_url})
+    kb.button(text="Регистрация участников", web_app={"url": settings.webapp_url})
+    kb.button(text="Регистрация зрителей", web_app={"url": settings.guest_webapp_url})
+    kb.adjust(1)
     await message.answer(
         "Регистрация на FCL 26.\n\n"
         "Важно: не закрывайте страницу через крестик до отправки данных — иначе введённая информация "
         "может не сохраниться полностью.\n\n"
         "Если мини‑приложение не открывается или работает нестабильно, попробуйте временно отключить VPN "
         "и открыть его снова через кнопку ниже.\n\n"
-        "Нажмите кнопку, чтобы открыть мини‑апп.",
+        "Выберите тип регистрации:",
         reply_markup=kb.as_markup(),
     )
 

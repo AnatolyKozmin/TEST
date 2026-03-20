@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppTopbar from '../components/AppTopbar.vue'
 import bgImageUrl from '../assets/tg-app-bg.png'
 import {
@@ -15,6 +15,7 @@ import {
 import { telegramReady } from '../lib/telegram'
 
 const router = useRouter()
+const route = useRoute()
 const savingState = ref<'idle' | 'saving' | 'saved' | 'error'>('idle')
 const lastError = ref<string | null>(null)
 
@@ -217,6 +218,9 @@ function onPagePointerDown(e: PointerEvent) {
 telegramReady()
 
 onMounted(async () => {
+  const tabFromUrl = String(route.query.tab ?? '').toLowerCase()
+  const openGuest = tabFromUrl === 'guest'
+
   try {
     const loaded = await loadDraft()
     if (loaded) {
@@ -224,7 +228,10 @@ onMounted(async () => {
       draft.discipline = loaded.discipline
       draft.mode = loaded.mode
       draft.data = loaded.data || {}
-      if (loaded.discipline === 'GUEST' || loaded.registration_kind === 'guest') {
+      if (openGuest) {
+        activeTab.value = 'guest'
+        ensureGuestDraft()
+      } else if (loaded.discipline === 'GUEST' || loaded.registration_kind === 'guest') {
         activeTab.value = 'guest'
         ensureGuestDraft()
       } else {
@@ -232,9 +239,15 @@ onMounted(async () => {
         ensureDefaults()
       }
       savingState.value = 'saved'
+    } else if (openGuest) {
+      activeTab.value = 'guest'
+      ensureGuestDraft()
     }
   } catch {
-    // ignore
+    if (openGuest) {
+      activeTab.value = 'guest'
+      ensureGuestDraft()
+    }
   }
 })
 

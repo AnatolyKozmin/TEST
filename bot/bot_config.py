@@ -6,8 +6,20 @@ class Settings(BaseSettings):
 
     bot_token: str
     webapp_url: str = "http://localhost:5173"
+    """Полный URL мини-аппа для регистрации участников (например …/tma/register)."""
+    webapp_guest_url: str = ""
+    """Если пусто — добавляется ?tab=guest к URL регистрации (см. guest_webapp_url)."""
     stats_api_url: str = "http://backend:8000/api/admin/stats"
     admin_user_ids: str = ""
+
+    @property
+    def guest_webapp_url(self) -> str:
+        if self.webapp_guest_url.strip():
+            return self.webapp_guest_url.strip()
+        base = self.webapp_url.rstrip("/")
+        if base.endswith("/register"):
+            return f"{base}?tab=guest"
+        return f"{base}/register?tab=guest"
 
     @property
     def parsed_admin_user_ids(self) -> set[int]:

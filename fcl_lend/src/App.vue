@@ -2,6 +2,13 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import partnersStrip from '@/assets/partners-strip.svg'
+
+/**
+ * Центры логотипов по оси X в viewBox partners-strip.svg (0 … 3235).
+ * Два соседних логотипа (~1804 и ~1862) в макете очень близко — один общий слот,
+ * иначе при равной ширине ячеек они наезжают друг на друга.
+ */
+const partnerCenters = [69.5, 483.738, 945.5, 1364.5, 1833, 2192.5, 2525.29, 2977.098]
 import contactOleg from '@/assets/contact-oleg.png'
 import contactPlaton from '@/assets/contact-platon.png'
 import contactAlina from '@/assets/contact-alina.png'
@@ -464,17 +471,28 @@ onBeforeUnmount(() => {
         <h2 class="section__title">НАМ ДОВЕРЯЮТ</h2>
           <div class="partners-marquee">
           <div class="partners-marquee__track">
-            <div class="partners-strip-wrap">
-              <img :src="partnersStrip" alt="Партнёры" class="partners-strip" />
-              <img src="/tach-logo-white.svg" alt="Tach" class="partners-strip__tach" />
-            </div>
-            <div class="partners-strip-wrap">
-              <img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" />
-              <img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip__tach" />
-            </div>
-            <div class="partners-strip-wrap">
-              <img :src="partnersStrip" alt="" aria-hidden="true" class="partners-strip" />
-              <img src="/tach-logo-white.svg" alt="" aria-hidden="true" class="partners-strip__tach" />
+            <div
+              v-for="n in 3"
+              :key="n"
+              class="partners-strip-wrap"
+              role="img"
+              :aria-label="n === 1 ? 'Партнёры турнира' : undefined"
+              :aria-hidden="n === 1 ? undefined : 'true'"
+            >
+              <div
+                v-for="(cx, idx) in partnerCenters"
+                :key="`${n}-${idx}`"
+                class="partner-slot"
+                :style="{ '--cx': String(cx) }"
+              >
+                <img :src="partnersStrip" alt="" class="partner-slot__img" draggable="false" />
+              </div>
+              <img
+                src="/tach-logo-white.svg"
+                alt="Tach"
+                class="partners-strip__tach"
+                :aria-hidden="n === 1 ? undefined : 'true'"
+              />
             </div>
           </div>
         </div>
@@ -1572,13 +1590,13 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
-/* wrap — strip + tach в одной линии */
+/* wrap — равные слоты под логотипы + tach в одной линии */
 .partners-strip-wrap {
   flex: 0 0 100vw;
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 24px;
+  gap: clamp(8px, 1.5vw, 24px);
   width: 100vw;
   height: clamp(140px, 14vw, 280px);
   overflow: hidden;
@@ -1586,13 +1604,27 @@ onBeforeUnmount(() => {
   box-sizing: border-box;
 }
 
-.partners-strip {
-  flex: 1;
+/* Одинаковая ширина «ячейки» для каждого логотипа; кадрируем один общий SVG */
+.partner-slot {
+  flex: 1 1 0;
   min-width: 0;
-  height: 100%;
-  object-fit: contain;
-  object-position: left center;
+  height: clamp(140px, 14vw, 280px);
+  position: relative;
+  overflow: hidden;
+  --slot-h: clamp(140px, 14vw, 280px);
+}
+
+.partner-slot__img {
+  position: absolute;
+  height: var(--slot-h);
+  width: auto;
+  max-width: none;
+  left: calc(50% - var(--cx) * var(--slot-h) / 189);
+  top: 50%;
+  transform: translateY(-50%);
   display: block;
+  pointer-events: none;
+  user-select: none;
 }
 
 .partners-strip__tach {
