@@ -87,3 +87,12 @@ export async function loadAdminRegistrations(params: {
   return (await res.json()) as AdminRegistrationsResponse
 }
 
+export async function downloadRegistrationsExcel(): Promise<Blob> {
+  const res = await fetch('/api/admin/registrations/export')
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '')
+    throw new Error(`Ошибка экспорта: ${res.status} ${txt}`)
+  }
+  return res.blob()
+}
+

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
-import { type AdminRegistration, loadAdminRegistrations } from '../lib/api'
+import { type AdminRegistration, downloadRegistrationsExcel, loadAdminRegistrations } from '../lib/api'
 
 const discipline = ref('')
 const mode = ref('')
@@ -11,6 +11,7 @@ const pageSize = 30
 
 const loading = ref(false)
 const error = ref<string | null>(null)
+const exportLoading = ref(false)
 const total = ref(0)
 const items = ref<AdminRegistration[]>([])
 const selectedId = ref<number | null>(null)
@@ -55,6 +56,24 @@ function applyFilters() {
   void loadPage()
 }
 
+async function downloadExcel() {
+  exportLoading.value = true
+  error.value = null
+  try {
+    const blob = await downloadRegistrationsExcel()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'registrations.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Не удалось скачать Excel'
+  } finally {
+    exportLoading.value = false
+  }
+}
+
 function prevPage() {
   if (page.value <= 1) return
   page.value -= 1
@@ -76,7 +95,17 @@ onMounted(() => {
   <div class="admin-page">
     <div class="admin-header">
       <h1>Админка заявок</h1>
-      <div class="admin-total">Всего: {{ total }}</div>
+      <div class="admin-header-right">
+        <span class="admin-total">Всего: {{ total }}</span>
+        <button
+          type="button"
+          class="admin-download-btn"
+          :disabled="exportLoading || total === 0"
+          @click="downloadExcel"
+        >
+          {{ exportLoading ? 'Скачивание...' : 'Скачать Excel' }}
+        </button>
+      </div>
     </div>
 
     <div class="admin-filters">
@@ -174,6 +203,31 @@ onMounted(() => {
 .admin-header h1 {
   margin: 0;
   font-size: 28px;
+}
+
+.admin-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-download-btn {
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(151, 125, 255, 0.4);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.admin-download-btn:hover:not(:disabled) {
+  background: rgba(151, 125, 255, 0.6);
+}
+
+.admin-download-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .admin-filters {

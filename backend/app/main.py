@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 from typing import Any
@@ -5,6 +6,8 @@ from typing import Any
 import httpx
 from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from openpyxl import Workbook
 from sqlalchemy import String, cast, desc, func, insert, or_, select
 
 from .config import settings
@@ -279,4 +282,108 @@ async def admin_registrations(
             for r in rows
         ],
     }
+
+
+def _safe_str(v: Any) -> str:
+    if v is None:
+        return ""
+    s = str(v).strip()
+    return s if s else ""
+
+
+def _build_excel_export(rows: list) -> bytes:
+    wb = Workbook()
+    wb.remove(wb.active)
+
+    by_sheet: dict[str, list] = {}
+    for r in rows:
+        key = f"{r.discipline}_{r.mode}"
+        if key not in by_sheet:
+            by_sheet[key] = []
+        by_sheet[key].append(r)
+
+    for sheet_name, regs in sorted(by_sheet.items()):
+        ws = wb.create_sheet(title=sheet_name[:31])
+
+        if regs and regs[0].mode == "team":
+            headers = [
+                "ID", "TG User ID", "TG Username", "Дата заявки",
+                "Игрок 1 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
+                "Игрок 2 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
+                "Игрок 3 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
+                "Игрок 4 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
+                "Игрок 5 (ФИО)", "Ник", "Steam", "Faceit", "Факультет", "TG",
+                "Запас 1", "Запас 2", "Запас 3",
+            ]
+            ws.append(headers)
+            for r in regs:
+                data = r.payload or {}
+                inner = data.get("data", data)
+                players = (inner.get("team_players") if isinstance(inner, dict) else []) or []
+                if not isinstance(players, list):
+                    players = []
+                row = [
+                    r.id,
+                    r.tg_user_id,
+                    _safe_str(r.tg_username),
+                    (r.submitted_at.isoformat()[:19] if r.submitted_at else ""),
+                ]
+                for i in range(8):
+                    p = players[i] if i < len(players) and isinstance(players[i], dict) else {}
+                    if i < 5:
+                        row.extend([
+                            _safe_str(p.get("full_name")),
+                            _safe_str(p.get("game_nick")),
+                            _safe_str(p.get("steam_url")),
+                            _safe_str(p.get("faceit_url")),
+                            _safe_str(p.get("faculty")) or _safe_str(p.get("faculty_other")),
+                            _safe_str(p.get("telegram")),
+                        ])
+                    else:
+                        row.append(_safe_str(p.get("full_name")) + " | " + _safe_str(p.get("game_nick")))
+                ws.append(row)
+        else:
+            headers = ["ID", "TG User ID", "TG Username", "Дата заявки", "ФИО", "Ник", "Telegram"]
+            ws.append(headers)
+            for r in regs:
+                data = r.payload or {}
+                inner = data.get("data", data)
+                if not isinstance(inner, dict):
+                    inner = {}
+                row = [
+                    r.id,
+                    r.tg_user_id,
+                    _safe_str(r.tg_username),
+                    (r.submitted_at.isoformat()[:19] if r.submitted_at else ""),
+                    _safe_str(inner.get("full_name")),
+                    _safe_str(inner.get("game_nick")),
+                    _safe_str(inner.get("telegram")),
+                ]
+                ws.append(row)
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+@app.get("/api/admin/registrations/export")
+async def admin_registrations_export():
+    async with SessionLocal() as session:
+        rows = (
+            await session.execute(
+                select(Registration)
+                .order_by(Registration.discipline, Registration.mode, desc(Registration.submitted_at))
+            )
+        ).scalars().all()
+
+    if not rows:
+        raise HTTPException(status_code=404, detail="Нет заявок для экспорта")
+
+    excel_bytes = _build_excel_export(rows)
+    filename = "registrations.xlsx"
+    return StreamingResponse(
+        io.BytesIO(excel_bytes),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
