@@ -81,6 +81,7 @@ docker compose -f docker-compose.prod.yml up -d --build
 1. **Логи контейнера:** `docker compose logs -f bot` (или `docker compose -f docker-compose.prod.yml logs -f bot`). Должна быть строка `Polling started; webapp ...`. Ошибки `Unauthorized` — неверный `BOT_TOKEN`; `Conflict` — второй процесс с тем же токеном (другой сервер или локальный запуск).
 2. **Webhook:** если раньше включали webhook, polling не получает апдейты. В коде бота перед стартом вызывается `delete_webhook`; пересоберите образ и перезапустите бота.
 3. **`bot/.env`:** обязательны `BOT_TOKEN` и корректный `WEBAPP_URL` (HTTPS для прод). Без валидного токена контейнер может сразу падать при старте.
+4. **SSL к Telegram:** если в логах `Cannot connect to host api.telegram.org:443` или «SSL handshake» дольше 60 с — с сервера нет нормального выхода к API Telegram (фаервол, блокировка, часто **битый IPv6**). Проверка: `curl -4 -I https://api.telegram.org` (форс IPv4). На хосте можно временно отключить IPv6 для теста; бот при старте теперь **ждёт** доступность API с повторными попытками, а не падает сразу.
 
 ### Важно про Telegram WebApp
 

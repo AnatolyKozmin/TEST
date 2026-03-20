@@ -4,6 +4,7 @@ import sys
 
 import httpx
 from aiogram import Bot, Dispatcher, F
+from aiogram.exceptions import TelegramNetworkError, TelegramUnauthorizedError
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -109,16 +110,45 @@ async def fallback(message: Message):
     await message.answer("Напишите /start, чтобы открыть мини‑апп.")
 
 
+async def _delete_webhook_with_retry(bot: Bot) -> None:
+    """Ждём доступность api.telegram.org (на сервере бывают обрывы SSL / блокировки)."""
+    delay = 5.0
+    max_delay = 120.0
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            await bot.delete_webhook(drop_pending_updates=False)
+            if attempt > 1:
+                log.info("Связь с Telegram API восстановлена (попытка %s).", attempt)
+            return
+        except TelegramUnauthorizedError:
+            log.error("BOT_TOKEN отклонён Telegram — проверьте bot/.env")
+            raise
+        except TelegramNetworkError as e:
+            log.warning(
+                "Нет связи с api.telegram.org (попытка %s): %s. Повтор через %.0f с. "
+                "С сервера: curl -4 -I https://api.telegram.org ; при зависании SSL часто помогает отключить IPv6.",
+                attempt,
+                e,
+                delay,
+            )
+            await asyncio.sleep(delay)
+            delay = min(delay * 1.5, max_delay)
+
+
 async def main():
     bot = Bot(settings.bot_token)
-    # Если у бота был включён webhook (другой сервис, BotFather, тесты), polling не получает апдейты
-    await bot.delete_webhook(drop_pending_updates=False)
-    log.info(
-        "Polling started; webapp participants=%s guests=%s",
-        settings.webapp_url,
-        settings.guest_webapp_url,
-    )
-    await dp.start_polling(bot)
+    try:
+        await _delete_webhook_with_retry(bot)
+        log.info(
+            "Polling started; webapp participants=%s guests=%s",
+            settings.webapp_url,
+            settings.guest_webapp_url,
+        )
+        await dp.start_polling(bot)
+    finally:
+        await bot.session.close()
 
 
 if __name__ == "__main__":
