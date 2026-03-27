@@ -472,16 +472,14 @@ onBeforeUnmount(() => {
         <div class="partners-marquee">
           <div class="partners-marquee__track">
             <div
-              v-for="n in 3"
+              v-for="n in 2"
               :key="n"
               class="partners-strip-wrap"
-              role="img"
-              :aria-label="n === 1 ? 'Партнёры турнира' : undefined"
               :aria-hidden="n === 1 ? undefined : 'true'"
             >
               <img
                 :src="partnersStrip"
-                :alt="n === 1 ? 'Партнёры' : ''"
+                :alt="n === 1 ? 'Партнёры турнира' : ''"
                 :aria-hidden="n === 1 ? undefined : 'true'"
                 class="partners-strip"
                 draggable="false"
@@ -1652,45 +1650,50 @@ onBeforeUnmount(() => {
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   padding: clamp(8px, 1.5vw, 16px) 0;
+  --partners-gap: 80px;
+  --partners-strip-h: clamp(90px, 10vw, 140px);
 }
 
 .partners-marquee__track {
-  --partners-gap: 80px;
   display: flex;
   align-items: center;
-  gap: var(--partners-gap);
-  padding: 0 var(--partners-gap);
-  animation: partners-scroll 22s linear infinite;
   width: max-content;
+  animation: partners-scroll 26s linear infinite;
   will-change: transform;
+}
+
+.partners-strip-wrap {
+  flex: 0 0 auto;
+  padding-right: var(--partners-gap);
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--partners-strip-h);
+}
+
+.partners-strip {
+  display: block;
+  height: var(--partners-strip-h);
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  object-position: center center;
+}
+
+@keyframes partners-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .partners-marquee__track {
     animation: none;
   }
-}
-
-.partners-strip-wrap {
-  --partners-strip-h: clamp(90px, 16vw, 140px);
-  flex: 0 0 100vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  min-height: var(--partners-strip-h);
-  padding: 0 clamp(10px, 2vw, 24px);
-  box-sizing: border-box;
-}
-
-.partners-strip {
-  display: block;
-  max-width: 100%;
-  max-height: var(--partners-strip-h);
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  object-position: center center;
 }
 
 /* Блок TACH — Figma: группа ~847px, под полосой (заголовок TACH + подпись + кнопка) */
@@ -1775,15 +1778,6 @@ onBeforeUnmount(() => {
 .partners-tach__btn:hover,
 .partners-tach__btn:focus-visible {
   opacity: 0.92;
-}
-
-@keyframes partners-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-100vw - var(--partners-gap)));
-  }
 }
 
 /* CONTACTS */
@@ -2330,20 +2324,34 @@ onBeforeUnmount(() => {
   }
 
   .partners-tach {
-    grid-template-columns: 1fr;
-    justify-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
     gap: 18px;
   }
 
   .partners-tach__logo-wrap {
-    width: min(420px, 92vw);
-    margin-left: auto;
-    margin-right: auto;
+    width: min(420px, 100%);
+    max-width: 100%;
+    margin: 0 auto;
+    align-self: center;
+    justify-self: center;
   }
 
   .partners-tach__content {
+    width: 100%;
+    max-width: 420px;
     align-items: center;
     text-align: center;
+  }
+
+  .partners-tach__btn {
+    margin: 0 auto;
   }
 
   .schedule-visual-scale {
