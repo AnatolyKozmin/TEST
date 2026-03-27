@@ -2469,13 +2469,15 @@ onBeforeUnmount(() => {
   }
 
   .partners-marquee__track {
-    --partners-gap: 48px;
-    animation-duration: 28s;
+    --partners-gap: clamp(120px, 18vw, 170px);
+    padding: 0 var(--partners-gap);
+    animation-duration: 34s;
   }
 
   .partners-strip-wrap {
     --partners-strip-h: clamp(128px, 22vw, 190px);
     justify-content: flex-start;
+    padding: 0 clamp(18px, 5vw, 32px);
   }
 
   .partners-strip {
