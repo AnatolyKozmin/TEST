@@ -45,6 +45,9 @@ const faqItems = [
   },
 ];
 
+/** Ссылка на сайт партнёра трансляций (при необходимости замените) */
+const tachPartnerUrl = 'https://tach.id/feed'
+
 const contacts = [
   {
     name: 'Олег Никитин',
@@ -459,10 +462,14 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <!-- ПАРТНЁРЫ -->
+      <!-- ПАРТНЁРЫ (макет Figma: эллипсы + полоса логотипов + блок TACH отдельно) -->
       <section class="section section--partners" id="partners">
-        <h2 class="section__title">НАМ ДОВЕРЯЮТ</h2>
-          <div class="partners-marquee">
+        <div class="partners-glow partners-glow--1" aria-hidden="true" />
+        <div class="partners-glow partners-glow--2" aria-hidden="true" />
+
+        <h2 class="section__title section__title--partners">НАМ ДОВЕРЯЮТ</h2>
+
+        <div class="partners-marquee">
           <div class="partners-marquee__track">
             <div
               v-for="n in 3"
@@ -472,24 +479,32 @@ onBeforeUnmount(() => {
               :aria-label="n === 1 ? 'Партнёры турнира' : undefined"
               :aria-hidden="n === 1 ? undefined : 'true'"
             >
-              <div class="partners-strip__main">
-                <img
-                  :src="partnersStrip"
-                  :alt="n === 1 ? 'Партнёры' : ''"
-                  :aria-hidden="n === 1 ? undefined : 'true'"
-                  class="partners-strip"
-                  draggable="false"
-                />
-              </div>
-              <div class="partners-strip__tach-wrap">
-                <img
-                  src="/tach-logo-white.svg"
-                  alt="Tach"
-                  class="partners-strip__tach"
-                  :aria-hidden="n === 1 ? undefined : 'true'"
-                />
-              </div>
+              <img
+                :src="partnersStrip"
+                :alt="n === 1 ? 'Партнёры' : ''"
+                :aria-hidden="n === 1 ? undefined : 'true'"
+                class="partners-strip"
+                draggable="false"
+              />
             </div>
+          </div>
+        </div>
+
+        <div class="partners-tach">
+          <div class="partners-tach__logo-wrap" aria-hidden="true">
+            <img src="/tach-logo-white.svg" alt="" class="partners-tach__logo" />
+          </div>
+          <div class="partners-tach__content">
+            <p class="partners-tach__brand">TACH</p>
+            <p class="partners-tach__tagline">Партнёр по трансляции.</p>
+            <a
+              class="partners-tach__btn"
+              :href="tachPartnerUrl"
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              Сайт
+            </a>
           </div>
         </div>
       </section>
@@ -1570,30 +1585,73 @@ onBeforeUnmount(() => {
   border-radius: 0;
 }
 
-/* PARTNERS */
+/* PARTNERS — Figma: Ellipse 9377 / 9379, заголовок с обводкой, полоса логотипов, блок TACH */
 .section--partners {
+  position: relative;
   max-width: none;
   padding-left: 0;
   padding-right: 0;
+  padding-top: clamp(32px, 6vw, 64px);
+  padding-bottom: clamp(48px, 8vw, 96px);
   margin-bottom: 80px;
+  overflow: visible;
 }
 
-.section--partners .section__title {
-  max-width: 1440px;
+.partners-glow {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  opacity: 0.4;
+  background: radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(151, 125, 255, 0.7) 0%,
+    rgba(151, 125, 255, 0) 99.04%
+  );
+}
+
+/* Ellipse 9377 */
+.partners-glow--1 {
+  width: min(1718px, 165vw);
+  height: min(936px, 90vw);
+  right: max(-35%, -420px);
+  top: -8%;
+  transform: rotate(13.26deg);
+}
+
+/* Ellipse 9379 */
+.partners-glow--2 {
+  width: min(1718px, 165vw);
+  height: min(805px, 78vw);
+  left: max(-42%, -520px);
+  bottom: -5%;
+  transform: rotate(-14.49deg);
+}
+
+.section__title--partners {
+  position: relative;
+  z-index: 1;
+  display: block;
   margin-left: auto;
   margin-right: auto;
-  padding: 0 156px;
+  margin-bottom: clamp(36px, 5vw, 52px);
+  padding: 0;
   text-align: center;
+  width: auto;
+  max-width: calc(100% - 32px);
+  box-sizing: border-box;
+  line-height: 1.05;
 }
 
 .partners-marquee {
   position: relative;
+  z-index: 1;
   overflow: hidden;
-  margin-top: 12px;
+  margin-top: 0;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
-  padding: 4px 0;
+  padding: clamp(8px, 1.5vw, 16px) 0;
 }
 
 .partners-marquee__track {
@@ -1607,54 +1665,116 @@ onBeforeUnmount(() => {
   will-change: transform;
 }
 
-/*
- * Партнёры: общая «высота строки» — полоса и Tach вписываются в одинаковый по высоте бокс (object-fit),
- * иначе у широкой полосы при узком месте высота проседала, а Tach оставался крупным.
- */
+@media (prefers-reduced-motion: reduce) {
+  .partners-marquee__track {
+    animation: none;
+  }
+}
+
 .partners-strip-wrap {
-  --partners-logo-h: clamp(40px, 6vw, 80px);
+  --partners-strip-h: clamp(90px, 16vw, 140px);
   flex: 0 0 100vw;
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: clamp(12px, 2vw, 32px);
+  justify-content: center;
   width: 100vw;
-  height: calc(var(--partners-logo-h) + 28px);
-  overflow: hidden;
+  min-height: var(--partners-strip-h);
   padding: 0 clamp(10px, 2vw, 24px);
   box-sizing: border-box;
 }
 
-.partners-strip__main,
-.partners-strip__tach-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--partners-logo-h);
-  min-height: 0;
-}
-
-/* Основная полоса — остаток ширины */
-.partners-strip__main {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-/* Слот под Tach: ширина от той же базовой высоты, что и у полосы (пропорции ~512×162) */
-.partners-strip__tach-wrap {
-  flex: 0 0 auto;
-  width: min(260px, max(140px, calc(var(--partners-logo-h) * 3.15)));
-}
-
-.partners-strip,
-.partners-strip__tach {
+.partners-strip {
   display: block;
   max-width: 100%;
-  max-height: 100%;
+  max-height: var(--partners-strip-h);
   width: auto;
   height: auto;
   object-fit: contain;
   object-position: center center;
+}
+
+/* Блок TACH — Figma: группа ~847px, под полосой (заголовок TACH + подпись + кнопка) */
+.partners-tach {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 255px);
+  align-items: center;
+  gap: clamp(24px, 4vw, 56px);
+  max-width: min(980px, 100%);
+  margin: clamp(40px, 6vw, 64px) auto 0;
+  padding: 0 clamp(16px, 4vw, 32px);
+  box-sizing: border-box;
+}
+
+.partners-tach__logo-wrap {
+  width: min(500px, 100%);
+  justify-self: center;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.partners-tach__logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+}
+
+.partners-tach__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  width: 100%;
+}
+
+.partners-tach__brand {
+  margin: 0;
+  font-family: 'Cygre ExtraBold', 'Cygre', sans-serif;
+  font-weight: 800;
+  font-size: clamp(36px, 6vw, 60px);
+  line-height: 1.05;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+}
+
+.partners-tach__tagline {
+  margin: 0;
+  font-family: 'Cygre', sans-serif;
+  font-weight: 400;
+  font-size: clamp(17px, 2.4vw, 21.84px);
+  line-height: 1.16;
+  color: #ffffff;
+}
+
+.partners-tach__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 180px;
+  min-height: 55px;
+  padding: 10px 24px;
+  box-sizing: border-box;
+  font-family: 'Cygre', sans-serif;
+  font-weight: 400;
+  font-size: 15.04px;
+  line-height: 1.16;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #0f0121;
+  background: #ffffff;
+  border: none;
+  border-radius: 0;
+  transition: opacity 0.2s ease;
+}
+
+.partners-tach__btn:hover,
+.partners-tach__btn:focus-visible {
+  opacity: 0.92;
 }
 
 @keyframes partners-scroll {
@@ -2205,8 +2325,25 @@ onBeforeUnmount(() => {
     margin-bottom: 28px;
   }
 
-  .section--partners .section__title {
-    padding: 0 16px;
+  .section--partners .section__title--partners {
+    max-width: calc(100% - 32px);
+  }
+
+  .partners-tach {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 18px;
+  }
+
+  .partners-tach__logo-wrap {
+    width: min(420px, 92vw);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .partners-tach__content {
+    align-items: center;
+    text-align: center;
   }
 
   .schedule-visual-scale {
@@ -2332,7 +2469,20 @@ onBeforeUnmount(() => {
   }
 
   .partners-marquee__track {
+    --partners-gap: 48px;
     animation-duration: 28s;
+  }
+
+  .partners-strip-wrap {
+    --partners-strip-h: clamp(128px, 22vw, 190px);
+    justify-content: flex-start;
+  }
+
+  .partners-strip {
+    max-width: none;
+    max-height: none;
+    height: var(--partners-strip-h);
+    width: auto;
   }
 
   .fcl-footer {
