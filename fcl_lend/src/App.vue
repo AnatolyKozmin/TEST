@@ -1,7 +1,6 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-import partnersStrip from '@/assets/partners-strip.svg'
 import contactOleg from '@/assets/contact-oleg.png'
 import contactPlaton from '@/assets/contact-platon.png'
 import contactAlina from '@/assets/contact-alina.png'
@@ -48,6 +47,26 @@ const faqItems = [
 /** Ссылка на сайт партнёра трансляций (при необходимости замените) */
 const tachPartnerUrl = 'https://tach.id/feed'
 
+const partnerLogoModules = import.meta.glob('@/assets/partners/*.{svg,png,webp,jpg,jpeg}', {
+  eager: true,
+  import: 'default',
+})
+
+const hiddenPartnerKeys = new Set([
+  // Broken export from Figma: file contains only a white rectangle
+  'coton',
+])
+
+const partnerLogos = Object.entries(partnerLogoModules)
+  .map(([path, src]) => {
+    const fileName = path.split('/').pop() ?? ''
+    const key = fileName.replace(/\.[^.]+$/, '')
+    const alt = key.replace(/[_-]+/g, ' ').trim() || 'Партнёр'
+    return { src, alt, key }
+  })
+  .filter((logo) => !hiddenPartnerKeys.has(logo.key))
+  .sort((a, b) => a.key.localeCompare(b.key))
+
 const contacts = [
   {
     name: 'Олег Никитин',
@@ -80,10 +99,18 @@ const heroGalleryScaleEl = ref(null)
 const heroGalleryScale = ref(1)
 const scheduleScaleEl = ref(null)
 const scheduleMobileScale = ref(1)
+const partnersMarqueeEl = ref(null)
+const partnersMarqueeDragging = ref(false)
 let revealObserver = null
 let statsResizeObserver = null
 let heroResizeObserver = null
 let scheduleResizeObserver = null
+let partnersAutoRaf = null
+let partnersAutoPrevTs = 0
+let partnersDragActive = false
+let partnersDragStartX = 0
+let partnersDragStartScroll = 0
+let partnersAutoPaused = false
 
 const toggleFaq = (index) => {
   openedFaqIndex.value = openedFaqIndex.value === index ? null : index
@@ -123,6 +150,69 @@ const updateScheduleScale = () => {
   const width = el.clientWidth || 0
   const nextScale = width > 0 ? Math.min(1, width / 980) : 1
   scheduleMobileScale.value = Number(nextScale.toFixed(4))
+}
+
+const PARTNERS_AUTO_SPEED_PX_PER_SEC = 72
+
+function normalizePartnersScroll(el) {
+  const loopWidth = el.scrollWidth / 2
+  if (loopWidth <= 0) return
+  if (el.scrollLeft >= loopWidth) {
+    el.scrollLeft -= loopWidth
+  } else if (el.scrollLeft < 0) {
+    el.scrollLeft += loopWidth
+  }
+}
+
+function partnersAutoStep(ts) {
+  const el = partnersMarqueeEl.value
+  if (!el) {
+    partnersAutoRaf = requestAnimationFrame(partnersAutoStep)
+    return
+  }
+  if (!partnersAutoPrevTs) partnersAutoPrevTs = ts
+  const dt = (ts - partnersAutoPrevTs) / 1000
+  partnersAutoPrevTs = ts
+  if (!partnersAutoPaused) {
+    el.scrollLeft += PARTNERS_AUTO_SPEED_PX_PER_SEC * dt
+    normalizePartnersScroll(el)
+  }
+  partnersAutoRaf = requestAnimationFrame(partnersAutoStep)
+}
+
+function onPartnersPointerDown(e) {
+  const el = partnersMarqueeEl.value
+  if (!el) return
+  partnersDragActive = true
+  partnersAutoPaused = true
+  partnersMarqueeDragging.value = true
+  partnersDragStartX = e.clientX
+  partnersDragStartScroll = el.scrollLeft
+  if (typeof el.setPointerCapture === 'function') {
+    el.setPointerCapture(e.pointerId)
+  }
+}
+
+function onPartnersPointerMove(e) {
+  const el = partnersMarqueeEl.value
+  if (!el || !partnersDragActive) return
+  const dx = e.clientX - partnersDragStartX
+  el.scrollLeft = partnersDragStartScroll - dx
+  normalizePartnersScroll(el)
+}
+
+function stopPartnersDragging(e) {
+  const el = partnersMarqueeEl.value
+  partnersDragActive = false
+  partnersMarqueeDragging.value = false
+  partnersAutoPaused = false
+  if (el && typeof el.releasePointerCapture === 'function') {
+    try {
+      el.releasePointerCapture(e.pointerId)
+    } catch (_) {
+      // no-op
+    }
+  }
 }
 
 onMounted(() => {
@@ -179,6 +269,7 @@ onMounted(() => {
       scheduleResizeObserver.observe(scheduleScaleEl.value)
     }
   }
+  partnersAutoRaf = requestAnimationFrame(partnersAutoStep)
 })
 
 onBeforeUnmount(() => {
@@ -190,6 +281,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', updateHeroGalleryScale)
   window.removeEventListener('resize', updateScheduleScale)
   document.body.style.overflow = ''
+  if (partnersAutoRaf) cancelAnimationFrame(partnersAutoRaf)
 })
 </script>
 
@@ -469,21 +561,30 @@ onBeforeUnmount(() => {
 
         <h2 class="section__title section__title--partners">НАМ ДОВЕРЯЮТ</h2>
 
-        <div class="partners-marquee">
+        <div
+          ref="partnersMarqueeEl"
+          class="partners-marquee"
+          :class="{ 'partners-marquee--dragging': partnersMarqueeDragging }"
+          @pointerdown="onPartnersPointerDown"
+          @pointermove="onPartnersPointerMove"
+          @pointerup="stopPartnersDragging"
+          @pointercancel="stopPartnersDragging"
+          @pointerleave="stopPartnersDragging"
+        >
           <div class="partners-marquee__track">
-            <div
-              v-for="n in 2"
-              :key="n"
-              class="partners-strip-wrap"
-              :aria-hidden="n === 1 ? undefined : 'true'"
-            >
-              <img
-                :src="partnersStrip"
-                :alt="n === 1 ? 'Партнёры турнира' : ''"
-                :aria-hidden="n === 1 ? undefined : 'true'"
-                class="partners-strip"
-                draggable="false"
-              />
+            <div v-for="n in 2" :key="n" class="partners-marquee__cycle" :aria-hidden="n === 1 ? undefined : 'true'">
+              <div
+                v-for="logo in partnerLogos"
+                :key="`${n}-${logo.key}`"
+                class="partners-logo"
+              >
+                <img
+                  :src="logo.src"
+                  :alt="n === 1 ? logo.alt : ''"
+                  :aria-hidden="n === 1 ? undefined : 'true'"
+                  draggable="false"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1644,56 +1745,62 @@ onBeforeUnmount(() => {
 .partners-marquee {
   position: relative;
   z-index: 1;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   margin-top: 0;
   width: 100vw;
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   padding: clamp(8px, 1.5vw, 16px) 0;
-  --partners-gap: 80px;
-  --partners-strip-h: clamp(90px, 10vw, 140px);
+  --partners-gap: clamp(44px, 5vw, 72px);
+  --partners-logo-h: clamp(76px, 8vw, 124px);
+  --partners-logo-w: clamp(160px, 18vw, 260px);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  touch-action: pan-x;
+}
+
+.partners-marquee::-webkit-scrollbar {
+  display: none;
+}
+
+.partners-marquee--dragging {
+  cursor: grabbing;
 }
 
 .partners-marquee__track {
   display: flex;
   align-items: center;
   width: max-content;
-  animation: partners-scroll 26s linear infinite;
-  will-change: transform;
+  will-change: scroll-position;
 }
 
-.partners-strip-wrap {
+.partners-marquee__cycle {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--partners-gap);
   padding-right: var(--partners-gap);
-  box-sizing: border-box;
+}
+
+.partners-logo {
+  flex: 0 0 auto;
+  width: var(--partners-logo-w);
+  height: var(--partners-logo-h);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--partners-strip-h);
 }
 
-.partners-strip {
+.partners-logo img {
   display: block;
-  height: var(--partners-strip-h);
   width: auto;
-  max-width: none;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
   object-position: center center;
-}
-
-@keyframes partners-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .partners-marquee__track {
-    animation: none;
-  }
 }
 
 /* Блок TACH — Figma: группа ~847px, под полосой (заголовок TACH + подпись + кнопка) */
@@ -2476,23 +2583,10 @@ onBeforeUnmount(() => {
     justify-content: center;
   }
 
-  .partners-marquee__track {
-    --partners-gap: clamp(120px, 18vw, 170px);
-    padding: 0 var(--partners-gap);
-    animation-duration: 34s;
-  }
-
-  .partners-strip-wrap {
-    --partners-strip-h: clamp(128px, 22vw, 190px);
-    justify-content: flex-start;
-    padding: 0 clamp(18px, 5vw, 32px);
-  }
-
-  .partners-strip {
-    max-width: none;
-    max-height: none;
-    height: var(--partners-strip-h);
-    width: auto;
+  .partners-marquee {
+    --partners-gap: clamp(26px, 5vw, 40px);
+    --partners-logo-h: clamp(112px, 20vw, 170px);
+    --partners-logo-w: clamp(150px, 34vw, 230px);
   }
 
   .fcl-footer {
